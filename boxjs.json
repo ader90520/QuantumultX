@@ -106,21 +106,19 @@
       "author": "@ader90520",
       "repo": "https://github.com/ader90520/QuantumultX",
       "icons": [
-        "https://raw.githubusercontent.com/lowking/Scripts/master/doc/icon/bingPoint.png",
-        "https://raw.githubusercontent.com/lowking/Scripts/master/doc/icon/bingPoint.png"
+        "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bing.png",
+        "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bing.png"
       ],
       "keys": [
         "bingPointCookieKey",
         "bingSearchCookiePCKey",
         "bingSearchCookieMobileKey",
-        "bingResetHours",
-        "bingPcSearchCount", 
-        "bingMobileSearchCount",
-        "bingEdgeSearchCount",
-        "bingUseCnDomain",
-        "bingSearchInterval",
-        "bingScriptTimeout",
-        "bingEnableDebug"
+        "bing_cn",
+        "bing_pc_times",
+        "bing_mobile_times",
+        "bing_interval",
+        "bing_reset_hours",
+        "bing_cache_point"
       ],
       "settings": [
         {
@@ -139,7 +137,7 @@
           "type": "textarea",
           "autoGrow": true,
           "placeholder": "自动获取 - 搜索关键词'pc'",
-          "desc": "用于PC端和Edge端搜索任务"
+          "desc": "用于PC端搜索任务"
         },
         {
           "id": "bingSearchCookieMobileKey",
@@ -151,22 +149,14 @@
           "desc": "用于移动端搜索任务"
         },
         {
-          "id": "bingResetHours",
-          "name": "每日任务重置时间(小时)",
-          "val": 8,
-          "type": "number",
-          "placeholder": "8",
-          "desc": "设置每天几点重置任务，24小时制"
-        },
-        {
-          "id": "bingUseCnDomain",
+          "id": "bing_cn",
           "name": "使用国区域名",
           "val": true,
           "type": "boolean",
           "desc": "开启使用cn.bing.com，关闭使用www.bing.com"
         },
         {
-          "id": "bingPcSearchCount",
+          "id": "bing_pc_times",
           "name": "PC端搜索次数",
           "val": 30,
           "type": "number",
@@ -174,7 +164,7 @@
           "desc": "PC端每日搜索次数，建议30次"
         },
         {
-          "id": "bingMobileSearchCount",
+          "id": "bing_mobile_times",
           "name": "移动端搜索次数",
           "val": 20,
           "type": "number",
@@ -182,15 +172,7 @@
           "desc": "移动端每日搜索次数，建议20次"
         },
         {
-          "id": "bingEdgeSearchCount",
-          "name": "Edge端搜索次数",
-          "val": 10,
-          "type": "number",
-          "placeholder": "10",
-          "desc": "Edge浏览器搜索次数"
-        },
-        {
-          "id": "bingSearchInterval",
+          "id": "bing_interval",
           "name": "搜索间隔(秒)",
           "val": 5,
           "type": "number",
@@ -198,63 +180,68 @@
           "desc": "每次搜索之间的间隔时间，避免过快请求"
         },
         {
-          "id": "bingScriptTimeout",
-          "name": "脚本超时时间(秒)", 
-          "val": 30,
+          "id": "bing_reset_hours",
+          "name": "每日重置时间(小时)",
+          "val": 8,
           "type": "number",
-          "placeholder": "30",
-          "desc": "脚本执行最大时间，避免卡死"
+          "placeholder": "8",
+          "desc": "设置每天几点重置任务，24小时制"
         },
         {
-          "id": "bingEnableDebug",
-          "name": "开启调试日志",
-          "val": false,
-          "type": "boolean",
-          "desc": "显示详细执行日志，用于排查问题"
+          "id": "bing_cache_point",
+          "name": "缓存积分",
+          "val": 0,
+          "type": "number",
+          "placeholder": "0",
+          "desc": "自动记录的上次积分，无需手动修改"
         }
       ],
-      "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing_complete.js",
+      "script": "https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/Bing/bingComplete.js",
       "desc_html": [
-        "<h3 style='margin-left:20px;'>Bing积分完整版 - 三合一功能</h3>",
-        "<p style='margin-left:20px;'>整合搜索Cookie获取、积分面板Cookie获取、积分任务执行于一体</p>",
+        "<h3 style='margin-left:20px;'>🏆 Bing积分完整版 v3.0</h3>",
+        "<p style='margin-left:20px;'>PC端+移动端+积分任务，完整版本支持所有积分获取方式</p>",
         
-        "<h4 style='margin-left:20px;'>重写配置（Cookie自动获取）</h4>",
-        "<pre style='margin-left:40px; background: #f8f9fa; padding: 15px; border-radius: 5px;'>",
-        "[rewrite local]\n",
-        "# 积分面板Cookie获取\n",
-        "^https\\:\\/\\/rewards\\.bing\\.com url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing_complete.js\n",
-        "# 搜索Cookie获取\n",
-        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=pc&.* url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing_complete.js\n",
-        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=testt&.* url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing_complete.js\n",
+        "<h4 style='margin-left:20px;'>Cookie获取重写配置</h4>",
+        "<pre style='margin-left:40px; background: #f8f9fa; padding: 15px; border-radius: 5px; font-size: 12px;'>",
+        "# Bing积分面板Cookie获取\n",
+        "^https\\:\\/\\/rewards\\.bing\\.com url script-request-header https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/Bing/bingCookie.js\n",
+        "# Bing搜索Cookie获取\n",
+        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=pc&.* url script-request-header https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/Bing/bingSearch.cookie.js\n",
+        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=testt&.* url script-request-header https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/Bing/bingSearch.cookie.js\n",
         "[MITM]\n",
         "hostname = rewards.bing.com, cn.bing.com",
         "</pre>",
         
         "<h4 style='margin-left:20px;'>Cookie获取步骤</h4>",
         "<ol style='margin-left:40px;'>",
-        "<li><strong>积分面板Cookie</strong>：访问 <a href='https://rewards.bing.com'>rewards.bing.com</a>（获取成功后建议禁用规则）</li>",
+        "<li><strong>积分面板Cookie</strong>：访问 <a href='https://rewards.bing.com'>rewards.bing.com</a> 登录</li>",
         "<li><strong>PC端搜索Cookie</strong>：访问 <code>https://cn.bing.com/search?q=pc</code></li>",
         "<li><strong>移动端搜索Cookie</strong>：访问 <code>https://cn.bing.com/search?q=testt</code></li>",
-        "<li>确保已登录Microsoft账号，系统会自动捕获Cookie并保存到BoxJS</li>",
+        "<li>确保已登录Microsoft账号，系统会自动捕获Cookie并保存</li>",
+        "<li>获取成功后建议禁用重写规则，避免重复触发</li>",
         "</ol>",
         
-        "<h4 style='margin-left:20px;'>功能特点</h4>",
+        "<h4 style='margin-left:20px;'>积分获取说明</h4>",
         "<ul style='margin-left:40px;'>",
-        "<li><strong>三合一设计</strong>：一个脚本同时处理Cookie获取和任务执行</li>",
-        "<li><strong>智能模式识别</strong>：自动区分重写模式（获取Cookie）和脚本模式（执行任务）</li>",
-        "<li><strong>多端搜索</strong>：支持PC、移动、Edge三端自动搜索</li>",
-        "<li><strong>积分任务</strong>：自动完成每日积分任务</li>",
-        "<li><strong>进度记忆</strong>：自动记录每日搜索进度，支持自定义重置时间</li>",
+        "<li><strong>PC端搜索</strong>：约90积分 (30次搜索)</li>",
+        "<li><strong>移动端搜索</strong>：约60积分 (20次搜索)</li>",
+        "<li><strong>日常任务</strong>：额外积分 (根据任务类型)</li>",
+        "<li><strong>每日总计</strong>：150+积分</li>",
         "</ul>",
+        
+        "<h4 style='margin-left:20px;'>定时任务配置</h4>",
+        "<pre style='margin-left:40px; background: #f8f9fa; padding: 15px; border-radius: 5px; font-size: 12px;'>",
+        "[task_local]\n",
+        "0 9 * * * https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/Bing/bingComplete.js, tag=🏆Bing积分完整版, img-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bing.png, enabled=true",
+        "</pre>",
         
         "<h4 style='margin-left:20px;'>执行流程</h4>",
         "<ol style='margin-left:40px;'>",
-        "<li>检查重置条件，清除昨日状态</li>",
+        "<li>检查重置条件，确认是否需要执行</li>",
         "<li>执行积分任务（需要积分面板Cookie）</li>",
         "<li>执行PC端搜索（需要PC搜索Cookie）</li>",
         "<li>执行移动端搜索（需要移动搜索Cookie）</li>",
-        "<li>执行Edge端搜索（使用PC搜索Cookie）</li>",
-        "<li>保存执行状态，显示积分结果</li>",
+        "<li>统计积分获取情况并发送通知</li>",
         "</ol>",
         
         "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
@@ -268,13 +255,23 @@
         "</div>",
         
         "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;'>",
-        "<p><strong>⚠️ 注意事项：</strong></p>",
+        "<p><strong>⚠️ 重要注意事项：</strong></p>",
         "<ul>",
-        "<li>获取Cookie成功后建议禁用重写规则，避免重复触发</li>",
+        "<li>Bing每天只能在一个地区进行积分任务</li>",
+        "<li>需要分别获取PC端和移动端Cookie</li>",
+        "<li>获取Cookie成功后建议禁用重写规则</li>",
         "<li>确保所有Cookie正确有效，否则任务会失败</li>",
         "<li>不要设置过短的搜索间隔，可能触发风控</li>",
         "<li>定期检查Cookie是否过期，及时重新获取</li>",
-        "<li>如遇问题，开启调试日志查看详细执行过程</li>",
+        "</ul>",
+        "</div>",
+        
+        "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 5px;'>",
+        "<p><strong>🔧 技术支持：</strong></p>",
+        "<ul>",
+        "<li><strong>脚本作者</strong>：@mcdasheng (基于lowking脚本优化)</li>",
+        "<li><strong>脚本地址</strong>：<a href='https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/Bing/bingComplete.js'>bingComplete.js</a></li>",
+        "<li><strong>BoxJS配置</strong>：已完全适配，确保键名匹配</li>",
         "</ul>",
         "</div>"
       ]
