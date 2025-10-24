@@ -1,0 +1,111 @@
+{
+  "id": "fuba_sign",
+  "name": "福利吧签到", 
+  "description": "福利吧每日自动签到脚本，兼容BoxJs以及Quantumult X",
+  "author": "@ader90520",
+  "icon": "https://raw.githubusercontent.com/leiyiyan/resource/main/icons/pyy.png",
+  "repo": "https://github.com/ader90520/fulibaqiandao",
+  "apps": [
+    {
+      "id": "fuba_sign",
+      "name": "福利吧签到",
+      "author": "@ader90520", 
+      "repo": "https://github.com/ader90520/fulibaqiandao",
+      "icons": [
+        "https://raw.githubusercontent.com/leiyiyan/resource/main/icons/pyy.png",
+        "https://raw.githubusercontent.com/leiyiyan/resource/main/icons/pyy.png"
+      ],
+      "keys": [
+        "fuba_cookie", 
+        "fuba_username",
+        "fuba_domain"
+      ],
+      "settings": [
+        {
+          "id": "fuba_domain",
+          "name": "福利吧域名",
+          "val": "www.wnflb2023.com",
+          "type": "select",
+          "options": [
+            {
+              "name": "wnflb2023.com",
+              "val": "www.wnflb2023.com"
+            },
+            {
+              "name": "wnflb00.com", 
+              "val": "www.wnflb00.com"
+            },
+            {
+              "name": "wnflb99.com",
+              "val": "www.wnflb99.com"
+            }
+          ],
+          "desc": "选择福利吧访问域名，如果某个域名无法访问，请尝试其他域名"
+        },
+        {
+          "id": "fuba_cookie",
+          "name": "福利吧Cookie", 
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "placeholder": "通过圈X重写规则自动获取",
+          "desc": "已配置自动获取，无需手动填写"
+        },
+        {
+          "id": "fuba_username",
+          "name": "福利吧用户名",
+          "val": "", 
+          "type": "text",
+          "placeholder": "通过圈X重写规则自动获取",
+          "desc": "已配置自动获取，无需手动填写"
+        },
+        {
+          "id": "@fuba.auto_get",
+          "name": "自动获取状态",
+          "val": false,
+          "type": "boolean",
+          "desc": "显示Cookie和用户名是否已通过重写规则自动获取"
+        }
+      ],
+      "scripts": [
+        {
+          "name": "福利吧签到",
+          "description": "每日自动签到福利吧，获取积分", 
+          "cron": "30 8 * * *"
+        }
+      ],
+      "descs_html": [
+        "<h3 style='margin-left:20px;'>福利吧自动签到脚本</h3>",
+        "<p style='margin-left:20px; color: orange;'><strong>Cookie和用户名已配置自动获取，无需手动填写</strong></p>",
+        
+        "<h4 style='margin-left:20px;'>自动获取配置说明</h4>",
+        "<ol style='margin-left:40px;'>",
+        "<li>确保Quantumult X重写规则中已启用福利吧Cookie获取规则</li>",
+        "<li>使用Safari浏览器访问福利吧网站并登录账号</li>",
+        "<li>系统将自动捕获Cookie和用户名信息并保存</li>",
+        "<li>成功获取后，上方输入框将显示自动获取的值</li>",
+        "<li>签到脚本会自动使用这些凭证进行每日签到</li>",
+        "</ol>",
+        
+        "<h4 style='margin-left:20px;'>技术实现原理</h4>",
+        "<ul style='margin-left:40px;'>",
+        "<li><strong>Cookie获取</strong>：通过重写规则拦截HTTP请求头中的Cookie信息</li>",
+        "<li><strong>用户名获取</strong>：从页面HTML中解析用户空间链接的用户名[citation:5]</li>",
+        "<li><strong>数据存储</strong>：使用$prefs API将数据持久化存储到BoxJS[citation:4]</li>",
+        "<li><strong>自动验证</strong>：比对获取的用户名与预期用户名确保Cookie有效性</li>",
+        "</ul>",
+        
+        "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;'>",
+        "<p><strong>⚠️ 重要提示：</strong></p>",
+        "<ul>",
+        "<li>获取成功后建议禁用获取规则，避免重复触发</li>",
+        "<li>Cookie有效期通常为1-3个月，过期需重新获取</li>",
+        "<li>请勿分享您的Cookie信息，确保账号安全</li>",
+        "<li>如遇签到失败，请检查Cookie是否失效并重新获取</li>",
+        "</ul>",
+        "</div>"
+      ]
+    }
+  ]
+}
+
