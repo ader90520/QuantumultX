@@ -122,33 +122,6 @@
       ],
       "settings": [
         {
-          "id": "bingPointCookieKey",
-          "name": "积分面板Cookie",
-          "val": "",
-          "type": "textarea",
-          "autoGrow": true,
-          "placeholder": "自动获取 - 访问rewards.bing.com",
-          "desc": "用于获取积分任务列表和执行积分任务"
-        },
-        {
-          "id": "bingSearchCookiePCKey",
-          "name": "PC端搜索Cookie",
-          "val": "",
-          "type": "textarea",
-          "autoGrow": true,
-          "placeholder": "自动获取 - 搜索关键词'pc'",
-          "desc": "用于PC端搜索任务"
-        },
-        {
-          "id": "bingSearchCookieMobileKey",
-          "name": "移动端搜索Cookie",
-          "val": "",
-          "type": "textarea",
-          "autoGrow": true,
-          "placeholder": "自动获取 - 搜索关键词'testt'",
-          "desc": "用于移动端搜索任务"
-        },
-        {
           "id": "bing_cn",
           "name": "使用国区域名",
           "val": true,
@@ -194,6 +167,33 @@
           "type": "number",
           "placeholder": "0",
           "desc": "自动记录的上次积分，无需手动修改"
+        },
+        {
+          "id": "bingPointCookieKey",
+          "name": "积分面板Cookie",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "placeholder": "自动获取 - 访问rewards.bing.com",
+          "desc": "用于获取积分任务列表和执行积分任务"
+        },
+        {
+          "id": "bingSearchCookiePCKey",
+          "name": "PC端搜索Cookie",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "placeholder": "自动获取 - 搜索关键词'pc'",
+          "desc": "用于PC端搜索任务"
+        },
+        {
+          "id": "bingSearchCookieMobileKey",
+          "name": "移动端搜索Cookie",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "placeholder": "自动获取 - 搜索关键词'testt'",
+          "desc": "用于移动端搜索任务"
         }
       ],
       "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js",
