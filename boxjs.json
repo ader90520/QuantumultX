@@ -196,21 +196,10 @@
           "desc": "自动记录的上次积分，无需手动修改"
         }
       ],
-      "script": "https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/Bing/bingComplete.js",
+      "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js",
       "desc_html": [
-        "<h3 style='margin-left:20px;'>🏆 Bing积分完整版 v3.0</h3>",
+        "<h3 style='margin-left:20px;'>🏆 Bing积分完整版</h3>",
         "<p style='margin-left:20px;'>PC端+移动端+积分任务，完整版本支持所有积分获取方式</p>",
-        
-        "<h4 style='margin-left:20px;'>Cookie获取重写配置</h4>",
-        "<pre style='margin-left:40px; background: #f8f9fa; padding: 15px; border-radius: 5px; font-size: 12px;'>",
-        "# Bing积分面板Cookie获取\n",
-        "^https\\:\\/\\/rewards\\.bing\\.com url script-request-header https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/Bing/bingCookie.js\n",
-        "# Bing搜索Cookie获取\n",
-        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=pc&.* url script-request-header https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/Bing/bingSearch.cookie.js\n",
-        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=testt&.* url script-request-header https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/Bing/bingSearch.cookie.js\n",
-        "[MITM]\n",
-        "hostname = rewards.bing.com, cn.bing.com",
-        "</pre>",
         
         "<h4 style='margin-left:20px;'>Cookie获取步骤</h4>",
         "<ol style='margin-left:40px;'>",
@@ -221,39 +210,6 @@
         "<li>获取成功后建议禁用重写规则，避免重复触发</li>",
         "</ol>",
         
-        "<h4 style='margin-left:20px;'>积分获取说明</h4>",
-        "<ul style='margin-left:40px;'>",
-        "<li><strong>PC端搜索</strong>：约90积分 (30次搜索)</li>",
-        "<li><strong>移动端搜索</strong>：约60积分 (20次搜索)</li>",
-        "<li><strong>日常任务</strong>：额外积分 (根据任务类型)</li>",
-        "<li><strong>每日总计</strong>：150+积分</li>",
-        "</ul>",
-        
-        "<h4 style='margin-left:20px;'>定时任务配置</h4>",
-        "<pre style='margin-left:40px; background: #f8f9fa; padding: 15px; border-radius: 5px; font-size: 12px;'>",
-        "[task_local]\n",
-        "0 9 * * * https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/Bing/bingComplete.js, tag=🏆Bing积分完整版, img-url=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bing.png, enabled=true",
-        "</pre>",
-        
-        "<h4 style='margin-left:20px;'>执行流程</h4>",
-        "<ol style='margin-left:40px;'>",
-        "<li>检查重置条件，确认是否需要执行</li>",
-        "<li>执行积分任务（需要积分面板Cookie）</li>",
-        "<li>执行PC端搜索（需要PC搜索Cookie）</li>",
-        "<li>执行移动端搜索（需要移动搜索Cookie）</li>",
-        "<li>统计积分获取情况并发送通知</li>",
-        "</ol>",
-        
-        "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
-        "<p><strong>💡 使用技巧：</strong></p>",
-        "<ul>",
-        "<li>建议设置搜索间隔3-5秒，避免被检测</li>",
-        "<li>积分面板Cookie用于获取任务列表和报告活动完成</li>",
-        "<li>搜索Cookie用于执行搜索任务获取积分</li>",
-        "<li>可设置定时任务，每日自动执行获取积分</li>",
-        "</ul>",
-        "</div>",
-        
         "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;'>",
         "<p><strong>⚠️ 重要注意事项：</strong></p>",
         "<ul>",
@@ -261,17 +217,6 @@
         "<li>需要分别获取PC端和移动端Cookie</li>",
         "<li>获取Cookie成功后建议禁用重写规则</li>",
         "<li>确保所有Cookie正确有效，否则任务会失败</li>",
-        "<li>不要设置过短的搜索间隔，可能触发风控</li>",
-        "<li>定期检查Cookie是否过期，及时重新获取</li>",
-        "</ul>",
-        "</div>",
-        
-        "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 5px;'>",
-        "<p><strong>🔧 技术支持：</strong></p>",
-        "<ul>",
-        "<li><strong>脚本作者</strong>：@mcdasheng (基于lowking脚本优化)</li>",
-        "<li><strong>脚本地址</strong>：<a href='https://raw.githubusercontent.com/MCdasheng/QuantumultX/main/Scripts/myScripts/Bing/bingComplete.js'>bingComplete.js</a></li>",
-        "<li><strong>BoxJS配置</strong>：已完全适配，确保键名匹配</li>",
         "</ul>",
         "</div>"
       ]
