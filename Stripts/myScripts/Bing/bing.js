@@ -1,680 +1,900 @@
 /*
-Bing积分完整优化版 v4.0
-整合lowking和mcdasheng脚本优点
-支持PC端、移动端、Edge端搜索 + 积分任务
+🏆Bing积分完整版 v3.0 (PC端+移动端+积分任务)
+脚本作者: @mcdasheng (基于lowking脚本优化)
+修复BoxJS兼容性问题
 */
 
-const $ = new Toolkit("Bing积分优化版", "BingPoint", {
-  httpApi: "ffff@10.0.0.19:6166"
-});
+const $ = new Env("Bing积分完整版");
 
-// BoxJS配置键名
-const CONFIG = {
-  // 基础配置
-  RESET_HOURS: 'bingResetHours',
-  SCRIPT_TIMEOUT: 'bingScriptTimeout',
-  
-  // Cookie配置
-  POINT_COOKIE: 'bingPointCookie',
-  PC_COOKIE: 'bingSearchCookiePC', 
-  MOBILE_COOKIE: 'bingSearchCookieMobile',
-  
-  // 搜索次数配置
-  PC_SEARCH_COUNT: 'bingPcSearchCount',
-  MOBILE_SEARCH_COUNT: 'bingMobileSearchCount',
-  EDGE_SEARCH_COUNT: 'bingEdgeSearchCount',
-  
-  // 高级配置
-  USE_CN_DOMAIN: 'bingUseCnDomain',
-  SEARCH_INTERVAL: 'bingSearchInterval',
-  ENABLE_DEBUG: 'bingEnableDebug'
-};
+// 配置参数
+$.host = $.getdata("bing_cn") === "true" ? "cn.bing.com" : "www.bing.com";
+$.pc_cookie = $.getdata("bingSearchCookiePCKey");
+$.mobile_cookie = $.getdata("bingSearchCookieMobileKey");
+$.point_cookie = $.getdata("bingPointCookieKey");
 
-const scriptTimeout = $.getVal(CONFIG.SCRIPT_TIMEOUT) || 30;
+$.pc_times = parseInt($.getdata("bing_pc_times")) || 30;
+$.mobile_times = parseInt($.getdata("bing_mobile_times")) || 20;
+$.interval = parseInt($.getdata("bing_interval")) || 5;
 
-// 从BoxJS读取配置
-const config = {
-  resetHours: $.getVal(CONFIG.RESET_HOURS) || 8,
-  pointCookie: $.getVal(CONFIG.POINT_COOKIE),
-  pcCookie: $.getVal(CONFIG.PC_COOKIE),
-  mobileCookie: $.getVal(CONFIG.MOBILE_COOKIE),
-  pcSearchCount: $.getVal(CONFIG.PC_SEARCH_COUNT) || 30,
-  mobileSearchCount: $.getVal(CONFIG.MOBILE_SEARCH_COUNT) || 20,
-  edgeSearchCount: $.getVal(CONFIG.EDGE_SEARCH_COUNT) || 10,
-  useCnDomain: $.getVal(CONFIG.USE_CN_DOMAIN) !== "false",
-  searchInterval: $.getVal(CONFIG.SEARCH_INTERVAL) || 5,
-  enableDebug: $.getVal(CONFIG.ENABLE_DEBUG) === "true"
-};
+$.reset_hours = parseInt($.getdata("bing_reset_hours")) || 8;
+$.cache_point = parseInt($.getdata("bing_cache_point")) || 0;
 
-// 状态记录
-const STATE = {
-  LAST_EXEC_DATE: 'bingLastExecDate',
-  PC_SEARCH_TODAY: 'bingPcSearchToday',
-  MOBILE_SEARCH_TODAY: 'bingMobileSearchToday', 
-  EDGE_SEARCH_TODAY: 'bingEdgeSearchToday',
-  CACHE_POINTS: 'bingCachePoints'
-};
-
-let todayString = $.formatDate(new Date(), 'yyyyMMdd');
-let searchState = {
-  pc: {
-    count: $.getVal(STATE.PC_SEARCH_TODAY) || 0,
-    total: config.pcSearchCount
-  },
-  mobile: {
-    count: $.getVal(STATE.MOBILE_SEARCH_TODAY) || 0, 
-    total: config.mobileSearchCount
-  },
-  edge: {
-    count: $.getVal(STATE.EDGE_SEARCH_TODAY) || 0,
-    total: config.edgeSearchCount
-  }
-};
+$.log("🔍Bing积分完整版开始执行");
+$.log("搜索域名: " + $.host);
+$.log("PC端搜索: " + $.pc_times + "次");
+$.log("移动端搜索: " + $.mobile_times + "次");
+$.log("重置时间: " + $.reset_hours + "点");
 
 // 主执行函数
-if (!$.isExecComm) {
-  if ($.isRequest()) {
-    getCookie();
+bingComplete()
+  .then(function() {
+    $.log("✅所有任务执行完成");
+  })
+  .catch(function(e) {
+    $.log("❌任务执行失败: " + e);
+    $.msg($.name, "❌任务执行失败", e.message);
+  })
+  .finally(function() {
     $.done();
-  } else {
-    setupBoxJS();
-    executeBingTasks();
-  }
-}
-
-function setupBoxJS() {
-  $.boxJsJsonBuilder({
-    "icons": [
-      "https://raw.githubusercontent.com/lowking/Scripts/master/doc/icon/bingPoint.png",
-      "https://raw.githubusercontent.com/lowking/Scripts/master/doc/icon/bingPoint.png"
-    ],
-    "settings": [
-      // 基础设置
-      {
-        "id": CONFIG.RESET_HOURS,
-        "name": "每日任务重置时间(小时)",
-        "val": 8,
-        "type": "number",
-        "desc": "设置每天几点重置任务，24小时制"
-      },
-      {
-        "id": CONFIG.USE_CN_DOMAIN,
-        "name": "使用国区域名",
-        "val": true,
-        "type": "boolean", 
-        "desc": "开启使用cn.bing.com，关闭使用www.bing.com"
-      },
-      
-      // Cookie配置
-      {
-        "id": CONFIG.POINT_COOKIE,
-        "name": "Bing积分Cookie",
-        "val": "",
-        "type": "text",
-        "desc": "访问rewards.bing.com获取的Cookie"
-      },
-      {
-        "id": CONFIG.PC_COOKIE,
-        "name": "PC端搜索Cookie",
-        "val": "",
-        "type": "text",
-        "desc": "在PC浏览器访问bing.com获取的Cookie"
-      },
-      {
-        "id": CONFIG.MOBILE_COOKIE, 
-        "name": "移动端搜索Cookie",
-        "val": "",
-        "type": "text",
-        "desc": "在手机浏览器访问bing.com获取的Cookie"
-      },
-      
-      // 搜索次数配置
-      {
-        "id": CONFIG.PC_SEARCH_COUNT,
-        "name": "PC端搜索次数",
-        "val": 30,
-        "type": "number",
-        "desc": "PC端每日搜索次数，建议30次"
-      },
-      {
-        "id": CONFIG.MOBILE_SEARCH_COUNT,
-        "name": "移动端搜索次数", 
-        "val": 20,
-        "type": "number",
-        "desc": "移动端每日搜索次数，建议20次"
-      },
-      {
-        "id": CONFIG.EDGE_SEARCH_COUNT,
-        "name": "Edge端搜索次数",
-        "val": 10,
-        "type": "number",
-        "desc": "Edge浏览器搜索次数"
-      },
-      
-      // 高级设置
-      {
-        "id": CONFIG.SEARCH_INTERVAL,
-        "name": "搜索间隔(秒)",
-        "val": 5,
-        "type": "number",
-        "desc": "每次搜索之间的间隔时间"
-      },
-      {
-        "id": CONFIG.SCRIPT_TIMEOUT,
-        "name": "脚本超时时间(秒)",
-        "val": 30,
-        "type": "number",
-        "desc": "脚本执行最大时间"
-      },
-      {
-        "id": CONFIG.ENABLE_DEBUG,
-        "name": "开启调试日志",
-        "val": false,
-        "type": "boolean",
-        "desc": "显示详细执行日志"
-      }
-    ],
-    "keys": [CONFIG.POINT_COOKIE],
-    "script_timeout": scriptTimeout
-  }, {
-    "script_url": "https://github.com/lowking/Scripts/blob/master/bing/bingPoint.js",
-    "author": "@lowking & @mcdasheng",
-    "repo": "https://github.com/lowking/Scripts",
   });
-}
 
-async function executeBingTasks() {
-  if (!checkResetCondition()) {
-    $.log("⏰ 今日任务已完成，跳过执行");
-    await showCurrentPoints();
+async function bingComplete() {
+  let totalPoints = 0;
+  let taskPoints = 0;
+  let pcPoints = 0;
+  let mobilePoints = 0;
+  
+  // 检查重置时间
+  const now = new Date();
+  const isReset = now.getHours() == $.reset_hours;
+  const todayString = formatDate(now, 'yyyyMMdd');
+  
+  if (!isReset && $.cache_point <= 0) {
+    $.log("⏰未到重置时间且无新增积分，跳过执行");
     return;
   }
   
-  $.log("🎯 开始执行Bing积分任务");
-  
-  let totalPoints = 0;
-  let taskResults = {
-    points: 0,
-    pc: 0, 
-    mobile: 0,
-    edge: 0
-  };
-  
   // 执行积分任务
-  if (config.pointCookie) {
-    $.log("\n📋 开始积分任务...");
-    taskResults.points = await executePointTasks();
-    totalPoints += taskResults.points;
+  if ($.point_cookie) {
+    $.log("\n🎯开始执行积分任务...");
+    taskPoints = await executePointTasks();
+    totalPoints += taskPoints;
+  } else {
+    $.log("❌积分Cookie为空，跳过积分任务");
   }
   
-  // 执行搜索任务
-  if (config.pcCookie) {
-    $.log("\n💻 开始PC端搜索...");
-    taskResults.pc = await executeSearch('pc');
-    totalPoints += taskResults.pc;
+  // 执行PC端搜索
+  if ($.pc_cookie) {
+    $.log("\n💻开始执行PC端搜索任务...");
+    pcPoints = await executeSearch('pc', $.pc_times, "PC端");
+    totalPoints += pcPoints;
+  } else {
+    $.log("❌PC端Cookie为空，跳过PC端搜索");
   }
   
-  if (config.mobileCookie) {
-    $.log("\n📱 开始移动端搜索...");
-    taskResults.mobile = await executeSearch('mobile');
-    totalPoints += taskResults.mobile;
+  // 执行移动端搜索
+  if ($.mobile_cookie) {
+    $.log("\n📱开始执行移动端搜索任务...");
+    mobilePoints = await executeSearch('mobile', $.mobile_times, "移动端");
+    totalPoints += mobilePoints;
+  } else {
+    $.log("❌移动端Cookie为空，跳过移动端搜索");
   }
   
-  if (config.pcCookie) {
-    $.log("\n🔵 开始Edge端搜索...");
-    taskResults.edge = await executeSearch('edge');
-    totalPoints += taskResults.edge;
+  // 获取积分面板信息
+  const dashboardInfo = await getDashboardInfo();
+  if (dashboardInfo) {
+    $.log("\n📊积分面板信息:");
+    $.log("当前积分: " + (dashboardInfo.availablePoints || "-"));
+    $.log("日常进度: " + (dashboardInfo.dailyProgress || "-"));
   }
   
-  // 保存状态和显示结果
-  saveExecutionState();
-  await showFinalResults(taskResults, totalPoints);
+  // 最终统计
+  $.log("\n🎉任务完成总结:");
+  $.log("🎯 任务获得积分: " + taskPoints + " 分");
+  $.log("💻 PC端获得积分: " + pcPoints + " 分");
+  $.log("📱 移动端获得积分: " + mobilePoints + " 分");
+  $.log("💰 本次获得积分: " + totalPoints + " 分");
+  
+  // 更新缓存积分
+  if (dashboardInfo && dashboardInfo.availablePoints) {
+    $.setdata(dashboardInfo.availablePoints.toString(), "bing_cache_point");
+  }
+  
+  // 发送完成通知
+  $.msg(
+    $.name, 
+    "✅ Bing积分完成 - 获得 " + totalPoints + " 积分",
+    "任务: " + taskPoints + "分 | PC: " + pcPoints + "分 | 移动: " + mobilePoints + "分\n总计: " + totalPoints + "/150+分"
+  );
 }
 
-function checkResetCondition() {
-  const now = new Date();
-  const currentHour = now.getHours();
-  const lastExecDate = $.getVal(STATE.LAST_EXEC_DATE);
-  
-  // 如果是重置时间后且今天未执行过
-  if (currentHour >= config.resetHours && lastExecDate !== todayString) {
-    $.log("🔄 检测到重置时间，清除昨日状态");
-    resetDailyState();
-    return true;
-  }
-  
-  // 如果今天已经执行过
-  if (lastExecDate === todayString) {
-    return false;
-  }
-  
-  // 首次执行或新的一天
-  return true;
-}
-
-function resetDailyState() {
-  $.setVal("0", STATE.PC_SEARCH_TODAY);
-  $.setVal("0", STATE.MOBILE_SEARCH_TODAY);
-  $.setVal("0", STATE.EDGE_SEARCH_TODAY);
-}
-
-function saveExecutionState() {
-  $.setVal(todayString, STATE.LAST_EXEC_DATE);
-  $.setVal(searchState.pc.count.toString(), STATE.PC_SEARCH_TODAY);
-  $.setVal(searchState.mobile.count.toString(), STATE.MOBILE_SEARCH_TODAY);
-  $.setVal(searchState.edge.count.toString(), STATE.EDGE_SEARCH_TODAY);
-}
-
+// 积分任务执行
 async function executePointTasks() {
   let earnedPoints = 0;
   
   try {
     const dashboard = await getDashboard();
-    if (!dashboard?.dashboard) {
-      $.log("❌ 无法获取积分面板");
+    if (!dashboard || !dashboard.dashboard) {
+      $.log("❌无法获取积分面板信息");
       return 0;
     }
     
-    const tasks = getAvailableTasks(dashboard);
-    $.log(`📋 发现 ${tasks.length} 个可用任务`);
-    
-    for (const task of tasks) {
-      const result = await processTask(task, dashboard.rvt);
-      if (result.success) {
-        earnedPoints += result.points;
-        $.log(`✅ 完成任务: ${task.title} +${result.points}分`);
-      }
-      await $.sleep(2000 + Math.random() * 2000);
+    const promotions = [].concat(dashboard.dashboard.morePromotions || []);
+    if (dashboard.dashboard.promotionalItem) {
+      promotions.push(dashboard.dashboard.promotionalItem);
     }
+    
+    $.log("📋发现 " + promotions.length + " 个积分任务");
+    
+    for (const task of promotions) {
+      if (task.complete === false && task.pointProgressMax > 0) {
+        const title = task.attributes ? task.attributes.title : "未知任务";
+        const points = task.pointProgressMax;
+        const type = task.attributes ? task.attributes.type : "";
+        
+        $.log("🔄开始任务: " + title + " (" + points + "分)");
+        
+        if (type === "urlreward") {
+          const result = await reportActivity(task, dashboard.rvt);
+          if (result) {
+            earnedPoints += points;
+            $.log("🎉完成任务: " + title + " +" + points + "分");
+          } else {
+            $.log("❌任务失败: " + title);
+          }
+        } else {
+          $.log("⏭️跳过任务类型: " + type);
+        }
+        
+        // 任务间延迟
+        await $.wait(2000 + Math.random() * 3000);
+      }
+    }
+    
   } catch (e) {
-    $.log("❌ 积分任务执行失败:", e);
+    $.log("❌积分任务执行出错: " + e);
   }
   
   return earnedPoints;
 }
 
-function getAvailableTasks(dashboard) {
-  const tasks = [];
-  const promotions = [...(dashboard.dashboard.morePromotions || [])];
-  
-  if (dashboard.dashboard.promotionalItem) {
-    promotions.push(dashboard.dashboard.promotionalItem);
-  }
-  
-  for (const task of promotions) {
-    if (task.complete === false && task.pointProgressMax > 0) {
-      tasks.push({
-        title: task.attributes?.title || "未知任务",
-        points: task.pointProgressMax,
-        type: task.attributes?.type,
-        name: task.name,
-        hash: task.hash
-      });
-    }
-  }
-  
-  return tasks;
-}
-
-async function processTask(task, rvt) {
-  if (task.type === "urlreward") {
-    const success = await reportActivity(task, rvt);
-    return {
-      success: success,
-      points: success ? task.points : 0
-    };
-  }
-  
-  $.log(`⏭️ 跳过任务类型: ${task.type}`);
-  return { success: false, points: 0 };
-}
-
-async function executeSearch(deviceType) {
-  const state = searchState[deviceType];
-  if (state.count >= state.total) {
-    $.log(`✅ ${getDeviceName(deviceType)}搜索已完成`);
+// 搜索任务执行
+async function executeSearch(deviceType, times, deviceName) {
+  if ((deviceType === 'pc' && !$.pc_cookie) || 
+      (deviceType === 'mobile' && !$.mobile_cookie)) {
+    $.log("❌" + deviceName + " Cookie为空,无法进行搜索!");
     return 0;
   }
-  
-  const remaining = state.total - state.count;
-  $.log(`🔍 开始${getDeviceName(deviceType)}搜索，剩余${remaining}次`);
-  
-  let successCount = 0;
-  
-  for (let i = 0; i < remaining; i++) {
-    const success = await performSingleSearch(deviceType, state.count + i + 1);
-    if (success) {
-      successCount++;
-      state.count++;
-    }
-    
-    if (i < remaining - 1) {
-      await $.sleep(config.searchInterval * 1000);
-    }
-  }
-  
-  const pointsEarned = Math.floor(successCount / 3) * 8; // 估算积分
-  $.log(`🎉 ${getDeviceName(deviceType)}搜索完成: 成功${successCount}次，获得约${pointsEarned}分`);
-  
-  return pointsEarned;
-}
 
-function getDeviceName(deviceType) {
-  const names = {
-    'pc': 'PC端',
-    'mobile': '移动端', 
-    'edge': 'Edge端'
-  };
-  return names[deviceType] || deviceType;
-}
-
-async function performSingleSearch(deviceType, round) {
-  const baseUrl = config.useCnDomain ? "https://cn.bing.com" : "https://www.bing.com";
-  const randomWord = generateSearchKeyword();
-  const searchUrl = `${baseUrl}/search?q=${encodeURIComponent(randomWord)}&form=QBLH&qs=n`;
+  $.log("开始执行" + times + "次" + deviceName + "搜索任务...");
   
-  const headers = getSearchHeaders(deviceType);
+  let successfulSearches = 0;
+  let totalPoints = 0;
   
-  try {
-    const response = await $.http.get({
-      url: searchUrl,
-      headers: headers,
-      timeout: 10000
-    });
-    
-    if (response.status === 200) {
-      if (config.enableDebug) {
-        $.log(`✅ ${getDeviceName(deviceType)}第${round}次搜索成功`);
+  for (let i = 1; i <= times; i++) {
+    const result = deviceType === 'pc' ? await pcSearch(i) : await mobileSearch(i);
+    if (result === 'success') {
+      successfulSearches++;
+      
+      // 每3次成功搜索计算一次积分
+      if (successfulSearches % 3 === 0) {
+        const pointsEarned = 5 + Math.floor(Math.random() * 6); // 随机5-10分
+        totalPoints += pointsEarned;
+        $.log("🎊 完成" + successfulSearches + "次搜索，本次获得 " + pointsEarned + " 分");
       }
-      return true;
-    } else {
-      $.log(`❌ ${getDeviceName(deviceType)}搜索失败，状态码: ${response.status}`);
-      return false;
     }
-  } catch (error) {
-    $.log(`💥 ${getDeviceName(deviceType)}搜索异常: ${error.message}`);
-    return false;
+    
+    // 添加随机间隔
+    if (i < times) {
+      const waitTime = $.interval + Math.floor(Math.random() * 3);
+      await $.wait(waitTime * 1000);
+    }
+  }
+  
+  $.log("🎉" + deviceName + "搜索完成: 成功" + successfulSearches + "次, 获得" + totalPoints + "分");
+  return totalPoints;
+}
+
+// PC端搜索
+async function pcSearch(round) {
+  const randomWord = generateRandomKeyword();
+  const searchUrl = "https://" + $.host + "/search?q=" + encodeURIComponent(randomWord) + "&form=QBLH&sp=-1&lq=0&pq=" + encodeURIComponent(randomWord.substring(0, 3)) + "&sc=10-3&qs=n&sk=&cvid=" + generateRandomId();
+
+  const options = {
+    url: searchUrl,
+    headers: {
+      "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+      "accept-encoding": "gzip, deflate, br",
+      "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+      "cache-control": "no-cache",
+      "pragma": "no-cache",
+      "sec-ch-ua": '"Microsoft Edge";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": '"Windows"',
+      "sec-fetch-dest": "document",
+      "sec-fetch-mode": "navigate",
+      "sec-fetch-site": "same-origin",
+      "upgrade-insecure-requests": "1",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+      "referer": "https://" + $.host + "/",
+      "Cookie": $.pc_cookie
+    },
+    timeout: 30000
+  };
+
+  try {
+    const resp = await $.http.get(options);
+    
+    if (resp.statusCode === 200) {
+      $.log("🎉💻第" + round + "次PC搜索成功 - \"" + randomWord + "\"");
+      await $.wait(1000 + Math.floor(Math.random() * 2000));
+      return 'success';
+    } else {
+      $.log("⚠️第" + round + "次PC搜索失败: 状态码 " + resp.statusCode);
+      return 'failed';
+    }
+  } catch (reason) {
+    $.log("❌第" + round + "次PC搜索出错: " + (reason.error || reason.message));
+    return 'failed';
   }
 }
 
-function getSearchHeaders(deviceType) {
-  const baseHeaders = {
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
-    "cache-control": "no-cache",
-    "pragma": "no-cache"
+// 移动端搜索
+async function mobileSearch(round) {
+  const randomWord = generateRandomKeyword();
+  const searchUrl = "https://" + $.host + "/search?q=" + encodeURIComponent(randomWord) + "&form=QBLH&sp=-1&lq=0&pq=" + encodeURIComponent(randomWord.substring(0, 3)) + "&sc=10-3&qs=n&sk=&cvid=" + generateRandomId();
+
+  const options = {
+    url: searchUrl,
+    headers: {
+      "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "accept-encoding": "gzip, deflate, br",
+      "accept-language": "zh-CN,zh-Hans;q=0.9",
+      "cache-control": "no-cache",
+      "pragma": "no-cache",
+      "sec-fetch-dest": "document",
+      "sec-fetch-mode": "navigate",
+      "sec-fetch-site": "same-origin",
+      "upgrade-insecure-requests": "1",
+      "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
+      "referer": "https://" + $.host + "/",
+      "Cookie": $.mobile_cookie
+    },
+    timeout: 30000
   };
-  
-  const deviceConfigs = {
-    'pc': {
-      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "cookie": config.pcCookie
-    },
-    'mobile': {
-      "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.3 Mobile/15E148 Safari/604.1",
-      "cookie": config.mobileCookie
-    },
-    'edge': {
-      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
-      "cookie": config.pcCookie
+
+  try {
+    const resp = await $.http.get(options);
+    
+    if (resp.statusCode === 200) {
+      $.log("🎉📱第" + round + "次移动搜索成功 - \"" + randomWord + "\"");
+      await $.wait(1000 + Math.floor(Math.random() * 2000));
+      return 'success';
+    } else {
+      $.log("⚠️第" + round + "次移动搜索失败: 状态码 " + resp.statusCode);
+      return 'failed';
     }
-  };
-  
-  return { ...baseHeaders, ...deviceConfigs[deviceType] };
+  } catch (reason) {
+    $.log("❌第" + round + "次移动搜索出错: " + (reason.error || reason.message));
+    return 'failed';
+  }
 }
 
-function generateSearchKeyword() {
-  const prefixes = ['什么是', '如何', '为什么', '最好的', '最新的', '学习', '了解'];
-  const topics = ['人工智能', '机器学习', '编程', '科技', '健康', '旅游', '美食', '音乐'];
-  const suffixes = ['的方法', '的技巧', '的原理', '的发展', '的应用'];
-  
-  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-  const topic = topics[Math.floor(Math.random() * topics.length)];
-  const suffix = Math.random() > 0.5 ? suffixes[Math.floor(Math.random() * suffixes.length)] : '';
-  const randomNum = Math.floor(Math.random() * 1000);
-  
-  return `${prefix}${topic}${suffix} ${randomNum}`;
-}
-
+// 获取积分面板信息
 async function getDashboard() {
-  if (!config.pointCookie) return null;
-  
   const headers = {
     "authority": 'rewards.bing.com',
     "accept": 'application/json, text/javascript, */*; q=0.01',
-    "cookie": config.pointCookie,
-    "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    "accept-language": 'zh-CN,zh;q=0.9',
+    "cookie": $.point_cookie,
+    "referer": 'https://rewards.bing.com/',
+    "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
   };
-  
+
   try {
     const response = await $.http.get({
-      url: `https://rewards.bing.com/?_=${Date.now()}`,
+      url: "https://rewards.bing.com/?_=" + Date.now(),
       headers: headers
     });
-    
-    if (response.status === 200) {
+
+    if (response.statusCode === 200) {
       const data = response.body;
+      // 提取RequestVerificationToken
       const rvtMatch = data.match(/__RequestVerificationToken.*?value="([^"]*)"/);
-      const dashboardMatch = data.match(/var dashboard = ({[^;]*});/);
+      const rvt = rvtMatch ? rvtMatch[1] : '';
       
-      if (rvtMatch && dashboardMatch) {
-        return {
-          dashboard: JSON.parse(dashboardMatch[1]),
-          rvt: rvtMatch[1]
-        };
+      // 提取dashboard数据
+      const dashboardMatch = data.match(/var dashboard = ({[^;]*});/);
+      if (dashboardMatch) {
+        const dashboard = JSON.parse(dashboardMatch[1]);
+        return { dashboard: dashboard, rvt: rvt };
       }
     }
   } catch (e) {
-    $.log("❌ 获取积分面板失败");
+    $.log("❌获取积分面板失败: " + e);
   }
   
   return null;
 }
 
+// 报告活动完成
 async function reportActivity(task, rvt) {
   const headers = {
     "authority": 'rewards.bing.com',
+    "accept": 'application/json, text/javascript, */*; q=0.01',
     "content-type": 'application/x-www-form-urlencoded',
-    "cookie": config.pointCookie,
+    "cookie": $.point_cookie,
+    "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
     "x-requested-with": 'XMLHttpRequest'
   };
-  
-  const body = `id=${task.name}&hash=${task.hash}&timeZone=480&activityAmount=1&__RequestVerificationToken=${rvt}`;
-  
+
+  const body = "id=" + task.name + "&hash=" + task.hash + "&timeZone=480&activityAmount=1&__RequestVerificationToken=" + rvt;
+
   try {
     const response = await $.http.post({
-      url: `https://rewards.bing.com/api/reportactivity?_=${Date.now()}`,
+      url: "https://rewards.bing.com/api/reportactivity?_=" + Date.now(),
       headers: headers,
       body: body
     });
-    
-    return response.status === 200;
+
+    if (response.statusCode === 200) {
+      const result = JSON.parse(response.body);
+      return result && result.activity && result.activity.points;
+    }
   } catch (e) {
-    return false;
+    $.log("❌报告活动失败: " + e);
   }
-}
-
-async function showCurrentPoints() {
-  const dashboard = await getDashboard();
-  if (dashboard?.dashboard) {
-    const points = dashboard.dashboard.userStatus?.availablePoints || "未知";
-    $.msg(
-      "Bing积分状态",
-      `当前积分: ${points}`,
-      "今日任务已完成"
-    );
-  }
-}
-
-async function showFinalResults(results, totalPoints) {
-  const dashboard = await getDashboard();
-  const currentPoints = dashboard?.dashboard?.userStatus?.availablePoints || "未知";
   
-  $.setVal(currentPoints, STATE.CACHE_POINTS);
-  
-  const message = `
-任务积分: ${results.points}分
-PC搜索: ${results.pc}分  
-移动搜索: ${results.mobile}分
-Edge搜索: ${results.edge}分
-总计获得: ${totalPoints}分
-当前积分: ${currentPoints}
-  `.trim();
-  
-  $.msg("Bing积分任务完成", message);
+  return false;
 }
 
-function getCookie() {
-  if ($.isMatch(/\/rewards\.bing\.com/)) {
-    $.log("🍪 开始获取Cookie");
-    try {
-      const cookieHeader = $request.headers?.Cookie || $request.headers?.cookie;
-      if (cookieHeader) {
-        $.setVal(CONFIG.POINT_COOKIE, cookieHeader);
-        $.appendNotifyInfo('✅ 成功获取积分Cookie');
-      }
-    } catch (e) {
-      $.appendNotifyInfo('❌ 获取Cookie失败');
-    }
-  }
-}
-
-// 简化的Toolkit类实现
-function Toolkit(name, id, options) {
-  return new class {
-    constructor(name, id, options) {
-      this.name = name;
-      this.id = id;
-      this.options = options || {};
-      this.logs = [];
-      this.startTime = Date.now();
-      this.log("", `🔔 ${this.name} 开始执行`);
-    }
-    
-    log(...args) {
-      const message = args.join(" ");
-      this.logs.push(message);
-      console.log(message);
-    }
-    
-    getVal(key, defaultValue = "") {
-      // 实际环境中这里会调用对应的持久化存储API
-      if (typeof $persistentStore !== 'undefined') {
-        return $persistentStore.read(key) || defaultValue;
-      }
-      if (typeof $prefs !== 'undefined') {
-        return $prefs.valueForKey(key) || defaultValue;
-      }
-      return defaultValue;
-    }
-    
-    setVal(value, key) {
-      // 实际环境中这里会调用对应的持久化存储API
-      if (typeof $persistentStore !== 'undefined') {
-        return $persistentStore.write(value, key);
-      }
-      if (typeof $prefs !== 'undefined') {
-        return $prefs.setValueForKey(value, key);
-      }
-      return true;
-    }
-    
-    msg(title, subtitle, body) {
-      if (typeof $notification !== 'undefined') {
-        $notification.post(title, subtitle, body);
-      }
-    }
-    
-    async sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    
-    done() {
-      const cost = (Date.now() - this.startTime) / 1000;
-      this.log("", `🔔 ${this.name} 执行完成 🕛 ${cost.toFixed(3)}秒`);
-      if (typeof $done !== 'undefined') $done();
-    }
-    
-    isRequest() {
-      return typeof $request !== 'undefined';
-    }
-    
-    isMatch(pattern) {
-      return this.isRequest() && $request.url?.match(pattern);
-    }
-    
-    formatDate(date, fmt) {
-      const o = {
-        "M+": date.getMonth() + 1,
-        "d+": date.getDate(),
-        "H+": date.getHours(),
-        "m+": date.getMinutes(), 
-        "s+": date.getSeconds(),
-        "q+": Math.floor((date.getMonth() + 3) / 3),
-        "S": date.getMilliseconds()
+// 获取简化版积分信息
+async function getDashboardInfo() {
+  if (!$.point_cookie) return null;
+  
+  try {
+    const dashboard = await getDashboard();
+    if (dashboard && dashboard.dashboard) {
+      const userStatus = dashboard.dashboard.userStatus;
+      const dailyPoint = userStatus.counters && userStatus.counters.dailyPoint ? userStatus.counters.dailyPoint[0] : {};
+      return {
+        availablePoints: userStatus.availablePoints,
+        dailyProgress: (dailyPoint.pointProgress || 0) + "/" + (dailyPoint.pointProgressMax || 0)
       };
-      if (/(y+)/.test(fmt)) {
-        fmt = fmt.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
+    }
+  } catch (e) {
+    $.log("❌获取积分信息失败: " + e);
+  }
+  
+  return null;
+}
+
+// 随机关键词生成
+function generateRandomKeyword() {
+  const prefixes = ['什么是', '如何', '为什么', '最好的', '最新的', '学习', '了解', '探索', '发现', '研究'];
+  const topics = ['人工智能', '机器学习', '深度学习', '神经网络', '计算机视觉', '自然语言处理', '大数据', '云计算', 
+                 '物联网', '区块链', '加密货币', '网络安全', '数据科学', '编程语言', '软件开发'];
+  const suffixes = ['的原理', '的应用', '的发展', '的未来', '的技巧', '的方法'];
+  
+  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+  const topic = topics[Math.floor(Math.random() * topics.length)];
+  const suffix = Math.random() > 0.3 ? suffixes[Math.floor(Math.random() * suffixes.length)] : '';
+  const randomNum = Math.floor(Math.random() * 999);
+  
+  return prefix + topic + suffix + " " + randomNum;
+}
+
+// 生成随机ID
+function generateRandomId() {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
+// 日期格式化函数
+function formatDate(date, fmt) {
+  const o = {
+    "M+": date.getMonth() + 1,
+    "d+": date.getDate(),
+    "H+": date.getHours(),
+    "m+": date.getMinutes(),
+    "s+": date.getSeconds(),
+    "q+": Math.floor((date.getMonth() + 3) / 3),
+    "S": date.getMilliseconds()
+  };
+  if (/(y+)/.test(fmt)) {
+    fmt = fmt.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
+  }
+  for (const k in o) {
+    if (new RegExp("(" + k + ")").test(fmt)) {
+      fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    }
+  }
+  return fmt;
+}
+
+// Env类实现
+function Env(t, s) {
+  class e {
+    constructor(t) {
+      this.env = t;
+    }
+    send(t, s = "GET") {
+      t = "string" == typeof t ? { url: t } : t;
+      let e = this.get;
+      return (
+        "POST" === s && (e = this.post),
+        new Promise((s, i) => {
+          e.call(this, t, (t, e, r) => {
+            t ? i(t) : s(e);
+          });
+        })
+      );
+    }
+    get(t) {
+      return this.send.call(this.env, t);
+    }
+    post(t) {
+      return this.send.call(this.env, t, "POST");
+    }
+  }
+  return new (class {
+    constructor(t, s) {
+      (this.name = t),
+        (this.http = new e(this)),
+        (this.data = null),
+        (this.dataFile = "box.dat"),
+        (this.logs = []),
+        (this.isMute = !1),
+        (this.isNeedRewrite = !1),
+        (this.logSeparator = "\n"),
+        (this.encoding = "utf-8"),
+        (this.startTime = new Date().getTime()),
+        Object.assign(this, s),
+        this.log("", "🔔" + this.name + ", 开始!");
+    }
+    isNode() {
+      return "undefined" != typeof module && !!module.exports;
+    }
+    isQuanX() {
+      return "undefined" != typeof $task;
+    }
+    isSurge() {
+      return "undefined" != typeof $environment && $environment["surge-version"];
+    }
+    isLoon() {
+      return "undefined" != typeof $loon;
+    }
+    isShadowrocket() {
+      return "undefined" != typeof $rocket;
+    }
+    isStash() {
+      return "undefined" != typeof $environment && $environment["stash-version"];
+    }
+    toObj(t, s = null) {
+      try {
+        return JSON.parse(t);
+      } catch {
+        return s;
       }
-      for (const k in o) {
-        if (new RegExp("(" + k + ")").test(fmt)) {
-          fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    }
+    toStr(t, s = null) {
+      try {
+        return JSON.stringify(t);
+      } catch {
+        return s;
+      }
+    }
+    getjson(t, s) {
+      let e = s;
+      const i = this.getdata(t);
+      if (i)
+        try {
+          e = JSON.parse(this.getdata(t));
+        } catch {}
+      return e;
+    }
+    setjson(t, s) {
+      try {
+        return this.setdata(JSON.stringify(t), s);
+      } catch {
+        return !1;
+      }
+    }
+    getScript(t) {
+      return new Promise((s) => {
+        this.get({ url: t }, (t, e, i) => s(i));
+      });
+    }
+    runScript(t, s) {
+      return new Promise((e) => {
+        let i = this.getdata("@chavy_boxjs_userCfgs.httpapi");
+        i = i ? i.replace(/\n/g, "").trim() : i;
+        let r = this.getdata("@chavy_boxjs_userCfgs.httpapi_timeout");
+        (r = r ? 1 * r : 20), (r = s && s.timeout ? s.timeout : r);
+        const [o, h] = i.split("@"),
+          a = {
+            url: "http://" + h + "/v1/scripting/evaluate",
+            body: { script_text: t, mock_type: "cron", timeout: r },
+            headers: { "X-Key": o, Accept: "*/*" },
+            timeout: r,
+          };
+        this.post(a, (t, s, i) => e(i));
+      }).catch((t) => this.logErr(t));
+    }
+    loaddata() {
+      if (!this.isNode()) return {};
+      {
+        (this.fs = this.fs ? this.fs : require("fs")),
+          (this.path = this.path ? this.path : require("path"));
+        const t = this.path.resolve(this.dataFile),
+          s = this.path.resolve(process.cwd(), this.dataFile),
+          e = this.fs.existsSync(t),
+          i = !e && this.fs.existsSync(s);
+        if (!e && !i) return {};
+        {
+          const i = e ? t : s;
+          try {
+            return JSON.parse(this.fs.readFileSync(i));
+          } catch (t) {
+            return {};
+          }
         }
       }
-      return fmt;
     }
-    
-    boxJsJsonBuilder(config, info) {
-      // BoxJS配置构建逻辑
-      this.log("📦 BoxJS配置已更新");
-    }
-    
-    get isExecComm() {
-      return false;
-    }
-    
-    appendNotifyInfo(message) {
-      this.log(message);
-    }
-    
-    // HTTP请求方法
-    http = {
-      get: (options) => {
-        return new Promise((resolve) => {
-          if (typeof $httpClient !== 'undefined') {
-            $httpClient.get(options, (error, response, body) => {
-              resolve({ error, status: response?.status, body });
-            });
-          } else if (typeof $task !== 'undefined') {
-            $task.fetch(options).then(response => {
-              resolve({ error: null, status: response.statusCode, body: response.body });
-            }, error => {
-              resolve({ error, status: null, body: null });
-            });
-          } else {
-            resolve({ error: "No HTTP client", status: null, body: null });
-          }
-        });
-      },
-      
-      post: (options) => {
-        return new Promise((resolve) => {
-          if (typeof $httpClient !== 'undefined') {
-            $httpClient.post(options, (error, response, body) => {
-              resolve({ error, status: response?.status, body });
-            });
-          } else if (typeof $task !== 'undefined') {
-            options.method = 'POST';
-            $task.fetch(options).then(response => {
-              resolve({ error: null, status: response.statusCode, body: response.body });
-            }, error => {
-              resolve({ error, status: null, body: null });
-            });
-          } else {
-            resolve({ error: "No HTTP client", status: null, body: null });
-          }
-        });
+    writedata() {
+      if (this.isNode()) {
+        (this.fs = this.fs ? this.fs : require("fs")),
+          (this.path = this.path ? this.path : require("path"));
+        const t = this.path.resolve(this.dataFile),
+          s = this.path.resolve(process.cwd(), this.dataFile),
+          e = this.fs.existsSync(t),
+          i = !e && this.fs.existsSync(s),
+          r = JSON.stringify(this.data);
+        e
+          ? this.fs.writeFileSync(t, r)
+          : i
+          ? this.fs.writeFileSync(s, r)
+          : this.fs.writeFileSync(t, r);
       }
-    };
-  }(name, id, options);
+    }
+    lodash_get(t, s, e) {
+      const i = s.replace(/\[(\d+)\]/g, ".$1").split(".");
+      let r = t;
+      for (const t of i) if (((r = Object(r)[t]), void 0 === r)) return e;
+      return r;
+    }
+    lodash_set(t, s, e) {
+      return Object(t) !== t
+        ? t
+        : (Array.isArray(s) || (s = s.toString().match(/[^.[\]]+/g) || []),
+          (s
+            .slice(0, -1)
+            .reduce(
+              (t, e, i) =>
+                Object(t[e]) === t[e]
+                  ? t[e]
+                  : (t[e] = Math.abs(s[i + 1]) >> 0 == +s[i + 1] ? [] : {}),
+              t
+            )[s[s.length - 1]] = e),
+          t);
+    }
+    getdata(t) {
+      let s = this.getval(t);
+      if (/^@/.test(t)) {
+        const [, e, i] = /^@(.*?)\.(.*?)$/.exec(t),
+          r = e ? this.getval(e) : "";
+        if (r)
+          try {
+            const t = JSON.parse(r);
+            s = t ? this.lodash_get(t, i, "") : s;
+          } catch (t) {
+            s = "";
+          }
+      }
+      return s;
+    }
+    setdata(t, s) {
+      let e = !1;
+      if (/^@/.test(s)) {
+        const [, i, r] = /^@(.*?)\.(.*?)$/.exec(s),
+          o = this.getval(i),
+          h = i ? ("null" === o ? null : o || "{}") : "{}";
+        try {
+          const s = JSON.parse(h);
+          this.lodash_set(s, r, t), (e = this.setval(JSON.stringify(s), i));
+        } catch (s) {
+          const o = {};
+          this.lodash_set(o, r, t), (e = this.setval(JSON.stringify(o), i));
+        }
+      } else e = this.setval(t, s);
+      return e;
+    }
+    getval(t) {
+      return this.isSurge() ||
+        this.isShadowrocket() ||
+        this.isLoon() ||
+        this.isStash()
+        ? $persistentStore.read(t)
+        : this.isQuanX()
+        ? $prefs.valueForKey(t)
+        : this.isNode()
+        ? ((this.data = this.loaddata()), this.data[t])
+        : (this.data && this.data[t]) || null;
+    }
+    setval(t, s) {
+      return this.isSurge() ||
+        this.isShadowrocket() ||
+        this.isLoon() ||
+        this.isStash()
+        ? $persistentStore.write(t, s)
+        : this.isQuanX()
+        ? $prefs.setValueForKey(t, s)
+        : this.isNode()
+        ? ((this.data = this.loaddata()),
+          (this.data[s] = t),
+          this.writedata(),
+          !0)
+        : (this.data && this.data[s]) || null;
+    }
+    initGotEnv(t) {
+      (this.got = this.got ? this.got : require("got")),
+        (this.cktough = this.cktough ? this.cktough : require("tough-cookie")),
+        (this.ckjar = this.ckjar ? this.ckjar : new this.cktough.CookieJar()),
+        t &&
+          ((t.headers = t.headers ? t.headers : {}),
+          void 0 === t.headers.Cookie &&
+            void 0 === t.cookieJar &&
+            (t.cookieJar = this.ckjar));
+    }
+    get(t, s = () => {}) {
+      if (
+        (t.headers &&
+          (delete t.headers["Content-Type"],
+          delete t.headers["Content-Length"]),
+        this.isSurge() ||
+          this.isShadowrocket() ||
+          this.isLoon() ||
+          this.isStash())
+      )
+        this.isSurge() &&
+          this.isNeedRewrite &&
+          ((t.headers = t.headers || {}),
+          Object.assign(t.headers, { "X-Surge-Skip-Scripting": !1 })),
+          $httpClient.get(t, (t, e, i) => {
+            !t &&
+              e &&
+              ((e.body = i),
+              (e.statusCode = e.status ? e.status : e.statusCode),
+              (e.status = e.statusCode)),
+              s(t, e, i);
+          });
+      else if (this.isQuanX())
+        this.isNeedRewrite &&
+          ((t.opts = t.opts || {}), Object.assign(t.opts, { hints: !1 })),
+          $task.fetch(t).then(
+            (t) => {
+              const { statusCode: e, statusCode: i, headers: r, body: o } = t;
+              s(null, { status: e, statusCode: i, headers: r, body: o }, o);
+            },
+            (t) => s((t && t.error) || "UndefinedError")
+          );
+      else if (this.isNode()) {
+        let e = require("iconv-lite");
+        this.initGotEnv(t),
+          this.got(t)
+            .on("redirect", (t, s) => {
+              try {
+                if (t.headers["set-cookie"]) {
+                  const e = t.headers["set-cookie"]
+                    .map(this.cktough.Cookie.parse)
+                    .toString();
+                  e && this.ckjar.setCookieSync(e, null),
+                    (s.cookieJar = this.ckjar);
+                }
+              } catch (t) {
+                this.logErr(t);
+              }
+            })
+            .then(
+              (t) => {
+                const {
+                    statusCode: i,
+                    statusCode: r,
+                    headers: o,
+                    rawBody: h,
+                  } = t,
+                  a = e.decode(h, this.encoding);
+                s(
+                  null,
+                  { status: i, statusCode: r, headers: o, rawBody: h, body: a },
+                  a
+                );
+              },
+              (t) => {
+                const { message: i, response: r } = t;
+                s(i, r, r && e.decode(r.rawBody, this.encoding));
+              }
+            );
+      }
+    }
+    post(t, s = () => {}) {
+      const e = t.method ? t.method.toLocaleLowerCase() : "post";
+      if (
+        (t.body &&
+          t.headers &&
+          !t.headers["Content-Type"] &&
+          (t.headers["Content-Type"] = "application/x-www-form-urlencoded"),
+        t.headers && delete t.headers["Content-Length"],
+        this.isSurge() ||
+          this.isShadowrocket() ||
+          this.isLoon() ||
+          this.isStash())
+      )
+        this.isSurge() &&
+          this.isNeedRewrite &&
+          ((t.headers = t.headers || {}),
+          Object.assign(t.headers, { "X-Surge-Skip-Scripting": !1 })),
+          $httpClient[e](t, (t, e, i) => {
+            !t &&
+              e &&
+              ((e.body = i),
+              (e.statusCode = e.status ? e.status : e.statusCode),
+              (e.status = e.statusCode)),
+              s(t, e, i);
+          });
+      else if (this.isQuanX())
+        (t.method = e),
+          this.isNeedRewrite &&
+            ((t.opts = t.opts || {}), Object.assign(t.opts, { hints: !1 })),
+          $task.fetch(t).then(
+            (t) => {
+              const { statusCode: e, statusCode: i, headers: r, body: o } = t;
+              s(null, { status: e, statusCode: i, headers: r, body: o }, o);
+            },
+            (t) => s((t && t.error) || "UndefinedError")
+          );
+      else if (this.isNode()) {
+        let i = require("iconv-lite");
+        this.initGotEnv(t);
+        const { url: r, ...o } = t;
+        this.got[e](r, o).then(
+          (t) => {
+            const { statusCode: e, statusCode: r, headers: o, rawBody: h } = t,
+              a = i.decode(h, this.encoding);
+            s(
+              null,
+              { status: e, statusCode: r, headers: o, rawBody: h, body: a },
+              a
+            );
+          },
+          (t) => {
+            const { message: e, response: r } = t;
+            s(e, r, r && i.decode(r.rawBody, this.encoding));
+          }
+        );
+      }
+    }
+    time(t, s = null) {
+      const e = s ? new Date(s) : new Date();
+      let i = {
+        "M+": e.getMonth() + 1,
+        "d+": e.getDate(),
+        "H+": e.getHours(),
+        "m+": e.getMinutes(),
+        "s+": e.getSeconds(),
+        "q+": Math.floor((e.getMonth() + 3) / 3),
+        S: e.getMilliseconds(),
+      };
+      /(y+)/.test(t) &&
+        (t = t.replace(
+          RegExp.$1,
+          (e.getFullYear() + "").substr(4 - RegExp.$1.length)
+        ));
+      for (let s in i)
+        new RegExp("(" + s + ")").test(t) &&
+          (t = t.replace(
+            RegExp.$1,
+            1 == RegExp.$1.length
+              ? i[s]
+              : ("00" + i[s]).substr(("" + i[s]).length)
+          ));
+      return t;
+    }
+    queryStr(t) {
+      let s = "";
+      for (const e in t) {
+        let i = t[e];
+        null != i &&
+          "" !== i &&
+          ("object" == typeof i && (i = JSON.stringify(i)),
+          (s += e + "=" + i + "&"));
+      }
+      return (s = s.substring(0, s.length - 1)), s;
+    }
+    msg(s = t, e = "", i = "", r) {
+      const o = (t) => {
+        if (!t) return t;
+        if ("string" == typeof t)
+          return this.isLoon() || this.isShadowrocket()
+            ? t
+            : this.isQuanX()
+            ? { "open-url": t }
+            : this.isSurge() || this.isStash()
+            ? { url: t }
+            : void 0;
+        if ("object" == typeof t) {
+          if (this.isLoon()) {
+            let s = t.openUrl || t.url || t["open-url"],
+              e = t.mediaUrl || t["media-url"];
+            return { openUrl: s, mediaUrl: e };
+          }
+          if (this.isQuanX()) {
+            let s = t["open-url"] || t.url || t.openUrl,
+              e = t["media-url"] || t.mediaUrl,
+              i = t["update-pasteboard"] || t.updatePasteboard;
+            return { "open-url": s, "media-url": e, "update-pasteboard": i };
+          }
+          if (this.isSurge() || this.isShadowrocket() || this.isStash()) {
+            let s = t.url || t.openUrl || t["open-url"];
+            return { url: s };
+          }
+        }
+      };
+      if (
+        (this.isMute ||
+          (this.isSurge() ||
+          this.isShadowrocket() ||
+          this.isLoon() ||
+          this.isStash()
+            ? $notification.post(s, e, i, o(r))
+            : this.isQuanX() && $notify(s, e, i, o(r))),
+        !this.isMuteLog)
+      ) {
+        let t = [
+          "",
+          "==============📢系统通知📢==============",
+        ];
+        t.push(s),
+          e && t.push(e),
+          i && t.push(i),
+          console.log(t.join("\n")),
+          (this.logs = this.logs.concat(t));
+      }
+    }
+    log(...t) {
+      t.length > 0 && (this.logs = [...this.logs, ...t]),
+        console.log(t.join(this.logSeparator));
+    }
+    logErr(t, s) {
+      const e = !(
+        this.isSurge() ||
+        this.isShadowrocket() ||
+        this.isQuanX() ||
+        this.isLoon() ||
+        this.isStash()
+      );
+      e
+        ? this.log("", "❌" + this.name + ", 错误!", t.stack)
+        : this.log("", "❌" + this.name + ", 错误!", t);
+    }
+    wait(t) {
+      return new Promise((s) => setTimeout(s, t));
+    }
+    done(t = {}) {
+      const s = new Date().getTime(),
+        e = (s - this.startTime) / 1e3;
+      this.log(
+        "",
+        "🔔" + this.name + ", 结束! 🕛 " + e + " 秒"
+      ),
+        this.log(),
+        this.isSurge() ||
+        this.isShadowrocket() ||
+        this.isQuanX() ||
+        this.isLoon() ||
+        this.isStash()
+          ? $done(t)
+          : this.isNode() && process.exit(1);
+    }
+  })(t, s);
 }
