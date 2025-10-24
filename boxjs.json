@@ -1,358 +1,548 @@
-{
-  "id": "ader90520.app.sub",
-  "name": "ader90520 脚本订阅合集", 
-  "description": "自用脚本合集，包含福利吧签到和Bing积分任务，兼容BoxJs以及Quantumult X",
-  "author": "@ader90520",
-  "icon": "https://raw.githubusercontent.com/leiyiyan/resource/main/icons/pyy.png",
-  "repo": "https://github.com/ader90520/QuantumultX",
-  "apps": [
-    {
-      "id": "fuba_sign",
-      "name": "福利吧签到",
-      "author": "@ader90520",
-      "repo": "https://github.com/ader90520/QuantumultX",
-      "icons": [
-        "https://raw.githubusercontent.com/leiyiyan/resource/main/icons/pyy.png",
-        "https://raw.githubusercontent.com/leiyiyan/resource/main/icons/pyy.png"
-      ],
-      "keys": [
-        "fuba_cookie",
-        "fuba_username",
-        "fuba_domain"
-      ],
-      "settings": [
-        {
-          "id": "fuba_domain",
-          "name": "福利吧域名",
-          "val": "www.wnflb2023.com",
-          "type": "select",
-          "options": [
-            {
-              "name": "wnflb2023.com",
-              "val": "www.wnflb2023.com"
-            },
-            {
-              "name": "wnflb00.com",
-              "val": "www.wnflb00.com"
-            },
-            {
-              "name": "wnflb99.com",
-              "val": "www.wnflb99.com"
-            }
-          ],
-          "desc": "选择福利吧访问域名，如果某个域名无法访问，请尝试其他域名"
-        },
-        {
-          "id": "fuba_cookie",
-          "name": "福利吧Cookie",
-          "val": "",
-          "type": "textarea",
-          "autoGrow": true,
-          "placeholder": "通过圈X重写规则自动获取",
-          "desc": "已配置自动获取，无需手动填写"
-        },
-        {
-          "id": "fuba_username",
-          "name": "福利吧用户名",
-          "val": "",
-          "type": "text",
-          "placeholder": "通过圈X重写规则自动获取", 
-          "desc": "已配置自动获取，无需手动填写"
-        },
-        {
-          "id": "@fuba.auto_get",
-          "name": "自动获取状态",
-          "val": false,
-          "type": "boolean",
-          "desc": "显示Cookie和用户名是否已通过重写规则自动获取"
+/*
+Bing积分完整版 - 三合一版本
+整合搜索Cookie获取、积分面板Cookie获取、积分任务执行
+作者: @ader90520
+*/
+
+// 判断执行模式
+if (typeof $request !== 'undefined') {
+    // 重写模式：获取Cookie
+    handleCookieRequest();
+} else {
+    // 脚本模式：执行积分任务
+    executeBingTasks();
+}
+
+function handleCookieRequest() {
+    const $ = initToolkit();
+    
+    if ($request.url.includes('rewards.bing.com')) {
+        // 积分面板Cookie获取
+        const ck = $request.headers["Cookie"];
+        $.msg("Bing积分", "🎉面板Cookie获取成功，请禁用重写规则");
+        $.log("🎉面板Cookie获取成功");
+        $.setdata("bingPointCookieKey", ck);
+        $.done();
+    } else if ($request.url.includes('cn.bing.com/search')) {
+        // 搜索Cookie获取
+        const ck = $request.headers["Cookie"];
+        if ($request.url.includes('q=pc')) {
+            $.msg("Bing搜索", "🎉PC端Cookie获取成功");
+            $.setdata("bingSearchCookiePCKey", ck);
+        } else if ($request.url.includes('q=testt')) {
+            $.msg("Bing搜索", "🎉移动端Cookie获取成功");
+            $.setdata("bingSearchCookieMobileKey", ck);
         }
-      ],
-      "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/fuba/fuba.js",
-      "desc_html": [
-        "<h3 style='margin-left:20px;'>福利吧自动签到脚本</h3>",
-        "<p style='margin-left:20px; color: orange;'><strong>Cookie和用户名已配置自动获取，无需手动填写</strong></p>",
-        
-        "<h4 style='margin-left:20px;'>自动获取配置说明</h4>",
-        "<ol style='margin-left:40px;'>",
-        "<li>确保Quantumult X重写规则中已启用福利吧Cookie获取规则</li>",
-        "<li>使用Safari浏览器访问福利吧网站并登录账号</li>",
-        "<li>系统将自动捕获Cookie和用户名信息并保存</li>",
-        "<li>成功获取后，上方输入框将显示自动获取的值</li>",
-        "<li>签到脚本会自动使用这些凭证进行每日签到</li>",
-        "</ol>",
-        
-        "<h4 style='margin-left:20px;'>技术实现原理</h4>",
-        "<ul style='margin-left:40px;'>",
-        "<li><strong>Cookie获取</strong>：通过重写规则拦截HTTP请求头中的Cookie信息</li>",
-        "<li><strong>用户名获取</strong>：从页面HTML中解析用户空间链接的用户名</li>",
-        "<li><strong>数据存储</strong>：使用$prefs API将数据持久化存储到BoxJS</li>",
-        "<li><strong>自动验证</strong>：比对获取的用户名与预期用户名确保Cookie有效性</li>",
-        "</ul>",
-        
-        "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;'>",
-        "<p><strong>⚠️ 重要提示：</strong></p>",
-        "<ul>",
-        "<li>获取成功后建议禁用获取规则，避免重复触发</li>",
-        "<li>Cookie有效期通常为1-3个月，过期需重新获取</li>",
-        "<li>请勿分享您的Cookie信息，确保账号安全</li>",
-        "<li>如遇签到失败，请检查Cookie是否失效并重新获取</li>",
-        "</ul>",
-        "</div>"
-      ]
-    },
-    {
-      "id": "bing_search_cookie",
-      "name": "Bing搜索Cookie获取",
-      "author": "@ader90520",
-      "repo": "https://github.com/ader90520/QuantumultX",
-      "icons": [
-        "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Google_Opinion_Rewards.png",
-        "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Google_Opinion_Rewards.png"
-      ],
-      "keys": [
-        "bingSearchCookieMobileKey",
-        "bingSearchCookiePCKey"
-      ],
-      "settings": [
-        {
-          "id": "bingSearchCookieMobileKey",
-          "name": "移动端Cookie",
-          "val": "",
-          "type": "textarea",
-          "autoGrow": true,
-          "placeholder": "自动获取",
-          "desc": "搜索关键词'testt'时自动获取的移动端Cookie"
-        },
-        {
-          "id": "bingSearchCookiePCKey",
-          "name": "PC端Cookie",
-          "val": "",
-          "type": "textarea",
-          "autoGrow": true,
-          "placeholder": "自动获取",
-          "desc": "搜索关键词'pc'时自动获取的PC端Cookie"
-        }
-      ],
-      "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingSearchCookie.js",
-      "desc_html": [
-        "<h3 style='margin-left:20px;'>Bing搜索Cookie自动获取</h3>",
-        "<p style='margin-left:20px;'>自动获取Bing搜索的Cookie，用于搜索任务</p>",
-        
-        "<h4 style='margin-left:20px;'>重写配置</h4>",
-        "<pre style='margin-left:40px; background: #f8f9fa; padding: 15px; border-radius: 5px;'>",
-        "[rewrite local]\n",
-        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=pc&.* url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingSearchCookie.js\n",
-        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=testt&.* url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingSearchCookie.js\n",
-        "[MITM]\n",
-        "hostname = cn.bing.com",
-        "</pre>",
-        
-        "<h4 style='margin-left:20px;'>使用步骤</h4>",
-        "<ol style='margin-left:40px;'>",
-        "<li><strong>PC端Cookie获取</strong>：在浏览器中访问 <code>https://cn.bing.com/search?q=pc</code></li>",
-        "<li><strong>移动端Cookie获取</strong>：在浏览器中访问 <code>https://cn.bing.com/search?q=testt</code></li>",
-        "<li>确保已登录Microsoft账号，系统会自动捕获Cookie</li>",
-        "<li>成功后会收到通知，Cookie将自动保存到BoxJS</li>",
-        "</ol>",
-        
-        "<h4 style='margin-left:20px;'>注意事项</h4>",
-        "<ul style='margin-left:40px;'>",
-        "<li>获取Cookie前请确保已登录Bing账号</li>",
-        "<li>PC端和移动端需要分别获取</li>",
-        "<li>获取成功后可以禁用重写规则，避免重复触发</li>",
-        "<li>Cookie有效期较长，一般可使用1-3个月</li>",
-        "</ul>"
-      ]
-    },
-    {
-      "id": "bing_point_cookie",
-      "name": "Bing积分面板Cookie获取",
-      "author": "@ader90520",
-      "repo": "https://github.com/ader90520/QuantumultX",
-      "icons": [
-        "https://raw.githubusercontent.com/lowking/Scripts/master/doc/icon/bingPoint.png",
-        "https://raw.githubusercontent.com/lowking/Scripts/master/doc/icon/bingPoint.png"
-      ],
-      "keys": [
-        "bingPointCookieKey"
-      ],
-      "settings": [
-        {
-          "id": "bingPointCookieKey",
-          "name": "积分面板Cookie",
-          "val": "",
-          "type": "textarea",
-          "autoGrow": true,
-          "placeholder": "自动获取",
-          "desc": "访问rewards.bing.com时自动获取的积分面板Cookie"
-        }
-      ],
-      "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingPointCookie.js",
-      "desc_html": [
-        "<h3 style='margin-left:20px;'>Bing积分面板Cookie自动获取</h3>",
-        "<p style='margin-left:20px;'>自动获取Bing积分面板的Cookie，用于积分任务</p>",
-        
-        "<h4 style='margin-left:20px;'>重写配置</h4>",
-        "<pre style='margin-left:40px; background: #f8f9fa; padding: 15px; border-radius: 5px;'>",
-        "[rewrite local]\n",
-        "^https\\:\\/\\/rewards\\.bing\\.com url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingPointCookie.js\n",
-        "[MITM]\n",
-        "hostname = rewards.bing.com",
-        "</pre>",
-        
-        "<h4 style='margin-left:20px;'>使用步骤</h4>",
-        "<ol style='margin-left:40px;'>",
-        "<li>在浏览器中访问 <a href='https://rewards.bing.com'>https://rewards.bing.com</a></li>",
-        "<li>确保已登录Microsoft账号</li>",
-        "<li>系统会自动捕获积分面板Cookie</li>",
-        "<li>成功后会收到通知，提示获取成功并建议禁用脚本</li>",
-        "<li>Cookie将自动保存到BoxJS</li>",
-        "</ol>",
-        
-        "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;'>",
-        "<p><strong>⚠️ 重要提示：</strong></p>",
-        "<ul>",
-        "<li>获取成功后请立即禁用此重写规则，避免重复触发</li>",
-        "<li>积分面板Cookie用于获取任务列表和报告活动完成</li>",
-        "<li>此Cookie与搜索Cookie不同，需要单独获取</li>",
-        "<li>获取一次即可长期使用，除非Cookie过期</li>",
-        "</ul>",
-        "</div>"
-      ]
-    },
-    {
-      "id": "bing_point",
-      "name": "Bing积分完整版",
-      "author": "@ader90520",
-      "repo": "https://github.com/ader90520/QuantumultX",
-      "icons": [
-        "https://raw.githubusercontent.com/lowking/Scripts/master/doc/icon/bingPoint.png",
-        "https://raw.githubusercontent.com/lowking/Scripts/master/doc/icon/bingPoint.png"
-      ],
-      "keys": [
-        "bingResetHours",
-        "bingPcSearchCount", 
-        "bingMobileSearchCount",
-        "bingEdgeSearchCount",
-        "bingUseCnDomain",
-        "bingSearchInterval",
-        "bingScriptTimeout",
-        "bingEnableDebug"
-      ],
-      "settings": [
-        {
-          "id": "bingResetHours",
-          "name": "每日任务重置时间(小时)",
-          "val": 8,
-          "type": "number",
-          "placeholder": "8",
-          "desc": "设置每天几点重置任务，24小时制"
-        },
-        {
-          "id": "bingUseCnDomain",
-          "name": "使用国区域名",
-          "val": true,
-          "type": "boolean",
-          "desc": "开启使用cn.bing.com，关闭使用www.bing.com"
-        },
-        {
-          "id": "bingPcSearchCount",
-          "name": "PC端搜索次数",
-          "val": 30,
-          "type": "number",
-          "placeholder": "30",
-          "desc": "PC端每日搜索次数，建议30次"
-        },
-        {
-          "id": "bingMobileSearchCount",
-          "name": "移动端搜索次数",
-          "val": 20,
-          "type": "number",
-          "placeholder": "20", 
-          "desc": "移动端每日搜索次数，建议20次"
-        },
-        {
-          "id": "bingEdgeSearchCount",
-          "name": "Edge端搜索次数",
-          "val": 10,
-          "type": "number",
-          "placeholder": "10",
-          "desc": "Edge浏览器搜索次数"
-        },
-        {
-          "id": "bingSearchInterval",
-          "name": "搜索间隔(秒)",
-          "val": 5,
-          "type": "number",
-          "placeholder": "5",
-          "desc": "每次搜索之间的间隔时间，避免过快请求"
-        },
-        {
-          "id": "bingScriptTimeout",
-          "name": "脚本超时时间(秒)", 
-          "val": 30,
-          "type": "number",
-          "placeholder": "30",
-          "desc": "脚本执行最大时间，避免卡死"
-        },
-        {
-          "id": "bingEnableDebug",
-          "name": "开启调试日志",
-          "val": false,
-          "type": "boolean",
-          "desc": "显示详细执行日志，用于排查问题"
-        }
-      ],
-      "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js",
-      "desc_html": [
-        "<h3 style='margin-left:20px;'>Bing积分完整优化版</h3>",
-        "<p style='margin-left:20px;'>整合lowking和mcdasheng脚本优点，支持PC端、移动端、Edge端搜索 + 积分任务</p>",
-        
-        "<h4 style='margin-left:20px;'>Cookie配置说明</h4>",
-        "<ul style='margin-left:40px;'>",
-        "<li><strong>搜索Cookie</strong>：使用上方的Bing搜索Cookie获取脚本自动获取</li>",
-        "<li><strong>积分面板Cookie</strong>：使用上方的Bing积分面板Cookie获取脚本自动获取</li>",
-        "</ul>",
-        
-        "<h4 style='margin-left:20px;'>功能特点</h4>",
-        "<ul style='margin-left:40px;'>",
-        "<li><strong>多端搜索</strong>：支持PC、移动、Edge三端自动搜索</li>",
-        "<li><strong>积分任务</strong>：自动完成每日积分任务</li>",
-        "<li><strong>智能重置</strong>：可自定义每日任务重置时间</li>",
-        "<li><strong>进度记忆</strong>：自动记录每日搜索进度</li>",
-        "<li><strong>灵活配置</strong>：各端搜索次数独立设置</li>",
-        "</ul>",
-        
-        "<h4 style='margin-left:20px;'>执行流程</h4>",
-        "<ol style='margin-left:40px;'>",
-        "<li>检查重置条件，清除昨日状态</li>",
-        "<li>执行积分任务（需要积分面板Cookie）</li>",
-        "<li>执行PC端搜索（需要PC搜索Cookie）</li>",
-        "<li>执行移动端搜索（需要移动搜索Cookie）</li>",
-        "<li>执行Edge端搜索（使用PC搜索Cookie）</li>",
-        "<li>保存执行状态，显示积分结果</li>",
-        "</ol>",
-        
-        "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
-        "<p><strong>💡 使用技巧：</strong></p>",
-        "<ul>",
-        "<li>建议设置搜索间隔3-5秒，避免被检测</li>",
-        "<li>积分面板Cookie用于获取任务列表和报告活动</li>",
-        "<li>搜索Cookie用于执行搜索任务获取积分</li>",
-        "<li>可设置定时任务，每日自动执行获取积分</li>",
-        "</ul>",
-        "</div>",
-        
-        "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;'>",
-        "<p><strong>⚠️ 注意事项：</strong></p>",
-        "<ul>",
-        "<li>确保Cookie正确有效，否则任务会失败</li>",
-        "<li>不要设置过短的搜索间隔，可能触发风控</li>",
-        "<li>定期检查Cookie是否过期，及时重新获取</li>",
-        "<li>如遇问题，开启调试日志查看详细执行过程</li>",
-        "</ul>",
-        "</div>"
-      ]
+        $.done();
     }
-  ]
+}
+
+async function executeBingTasks() {
+    const $ = new Toolkit("Bing积分完整版");
+    
+    // 读取配置
+    const config = {
+        resetHours: $.getVal('bingResetHours') || 8,
+        pointCookie: $.getVal('bingPointCookieKey'),
+        pcCookie: $.getVal('bingSearchCookiePCKey'),
+        mobileCookie: $.getVal('bingSearchCookieMobileKey'),
+        pcSearchCount: $.getVal('bingPcSearchCount') || 30,
+        mobileSearchCount: $.getVal('bingMobileSearchCount') || 20,
+        edgeSearchCount: $.getVal('bingEdgeSearchCount') || 10,
+        useCnDomain: $.getVal('bingUseCnDomain') !== "false",
+        searchInterval: $.getVal('bingSearchInterval') || 5,
+        enableDebug: $.getVal('bingEnableDebug') === "true"
+    };
+
+    // 状态记录
+    const STATE = {
+        LAST_EXEC_DATE: 'bingLastExecDate',
+        PC_SEARCH_TODAY: 'bingPcSearchToday',
+        MOBILE_SEARCH_TODAY: 'bingMobileSearchToday', 
+        EDGE_SEARCH_TODAY: 'bingEdgeSearchToday',
+        CACHE_POINTS: 'bingCachePoints'
+    };
+
+    const todayString = $.formatDate(new Date(), 'yyyyMMdd');
+    let searchState = {
+        pc: { count: $.getVal(STATE.PC_SEARCH_TODAY) || 0, total: config.pcSearchCount },
+        mobile: { count: $.getVal(STATE.MOBILE_SEARCH_TODAY) || 0, total: config.mobileSearchCount },
+        edge: { count: $.getVal(STATE.EDGE_SEARCH_TODAY) || 0, total: config.edgeSearchCount }
+    };
+
+    // 检查重置条件
+    if (!checkResetCondition(config.resetHours, todayString, $, STATE)) {
+        $.log("⏰ 今日任务已完成，跳过执行");
+        await showCurrentPoints(config.pointCookie, $);
+        return;
+    }
+    
+    $.log("🎯 开始执行Bing积分任务");
+    
+    let totalPoints = 0;
+    let taskResults = { points: 0, pc: 0, mobile: 0, edge: 0 };
+    
+    // 执行积分任务
+    if (config.pointCookie) {
+        $.log("\n📋 开始积分任务...");
+        taskResults.points = await executePointTasks(config.pointCookie, $);
+        totalPoints += taskResults.points;
+    } else {
+        $.log("❌ 未配置积分面板Cookie，跳过积分任务");
+    }
+    
+    // 执行搜索任务
+    if (config.pcCookie) {
+        $.log("\n💻 开始PC端搜索...");
+        taskResults.pc = await executeSearch('pc', searchState.pc, config, $);
+        totalPoints += taskResults.pc;
+    } else {
+        $.log("❌ 未配置PC端Cookie，跳过PC搜索");
+    }
+    
+    if (config.mobileCookie) {
+        $.log("\n📱 开始移动端搜索...");
+        taskResults.mobile = await executeSearch('mobile', searchState.mobile, config, $);
+        totalPoints += taskResults.mobile;
+    } else {
+        $.log("❌ 未配置移动端Cookie，跳过移动搜索");
+    }
+    
+    if (config.pcCookie) {
+        $.log("\n🔵 开始Edge端搜索...");
+        taskResults.edge = await executeSearch('edge', searchState.edge, config, $);
+        totalPoints += taskResults.edge;
+    }
+    
+    // 保存状态和显示结果
+    saveExecutionState(todayString, searchState, $, STATE);
+    await showFinalResults(taskResults, totalPoints, config.pointCookie, $);
+}
+
+function checkResetCondition(resetHours, todayString, $, STATE) {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const lastExecDate = $.getVal(STATE.LAST_EXEC_DATE);
+    
+    if (currentHour >= resetHours && lastExecDate !== todayString) {
+        $.log("🔄 检测到重置时间，清除昨日状态");
+        resetDailyState($, STATE);
+        return true;
+    }
+    
+    if (lastExecDate === todayString) {
+        return false;
+    }
+    
+    return true;
+}
+
+function resetDailyState($, STATE) {
+    $.setVal("0", STATE.PC_SEARCH_TODAY);
+    $.setVal("0", STATE.MOBILE_SEARCH_TODAY);
+    $.setVal("0", STATE.EDGE_SEARCH_TODAY);
+}
+
+function saveExecutionState(todayString, searchState, $, STATE) {
+    $.setVal(todayString, STATE.LAST_EXEC_DATE);
+    $.setVal(searchState.pc.count.toString(), STATE.PC_SEARCH_TODAY);
+    $.setVal(searchState.mobile.count.toString(), STATE.MOBILE_SEARCH_TODAY);
+    $.setVal(searchState.edge.count.toString(), STATE.EDGE_SEARCH_TODAY);
+}
+
+async function executePointTasks(pointCookie, $) {
+    let earnedPoints = 0;
+    
+    try {
+        const dashboard = await getDashboard(pointCookie, $);
+        if (!dashboard?.dashboard) {
+            $.log("❌ 无法获取积分面板");
+            return 0;
+        }
+        
+        const tasks = getAvailableTasks(dashboard);
+        $.log(`📋 发现 ${tasks.length} 个可用任务`);
+        
+        for (const task of tasks) {
+            const result = await processTask(task, dashboard.rvt, pointCookie, $);
+            if (result.success) {
+                earnedPoints += result.points;
+                $.log(`✅ 完成任务: ${task.title} +${result.points}分`);
+            }
+            await $.sleep(2000 + Math.random() * 2000);
+        }
+    } catch (e) {
+        $.log("❌ 积分任务执行失败:", e);
+    }
+    
+    return earnedPoints;
+}
+
+function getAvailableTasks(dashboard) {
+    const tasks = [];
+    const promotions = [...(dashboard.dashboard.morePromotions || [])];
+    
+    if (dashboard.dashboard.promotionalItem) {
+        promotions.push(dashboard.dashboard.promotionalItem);
+    }
+    
+    for (const task of promotions) {
+        if (task.complete === false && task.pointProgressMax > 0) {
+            tasks.push({
+                title: task.attributes?.title || "未知任务",
+                points: task.pointProgressMax,
+                type: task.attributes?.type,
+                name: task.name,
+                hash: task.hash
+            });
+        }
+    }
+    
+    return tasks;
+}
+
+async function processTask(task, rvt, pointCookie, $) {
+    if (task.type === "urlreward") {
+        const success = await reportActivity(task, rvt, pointCookie, $);
+        return {
+            success: success,
+            points: success ? task.points : 0
+        };
+    }
+    
+    $.log(`⏭️ 跳过任务类型: ${task.type}`);
+    return { success: false, points: 0 };
+}
+
+async function executeSearch(deviceType, state, config, $) {
+    if (state.count >= state.total) {
+        $.log(`✅ ${getDeviceName(deviceType)}搜索已完成`);
+        return 0;
+    }
+    
+    const remaining = state.total - state.count;
+    $.log(`🔍 开始${getDeviceName(deviceType)}搜索，剩余${remaining}次`);
+    
+    let successCount = 0;
+    
+    for (let i = 0; i < remaining; i++) {
+        const success = await performSingleSearch(deviceType, state.count + i + 1, config, $);
+        if (success) {
+            successCount++;
+            state.count++;
+        }
+        
+        if (i < remaining - 1) {
+            await $.sleep(config.searchInterval * 1000);
+        }
+    }
+    
+    const pointsEarned = Math.floor(successCount / 3) * 8;
+    $.log(`🎉 ${getDeviceName(deviceType)}搜索完成: 成功${successCount}次，获得约${pointsEarned}分`);
+    
+    return pointsEarned;
+}
+
+function getDeviceName(deviceType) {
+    const names = { 'pc': 'PC端', 'mobile': '移动端', 'edge': 'Edge端' };
+    return names[deviceType] || deviceType;
+}
+
+async function performSingleSearch(deviceType, round, config, $) {
+    const baseUrl = config.useCnDomain ? "https://cn.bing.com" : "https://www.bing.com";
+    const randomWord = generateSearchKeyword();
+    const searchUrl = `${baseUrl}/search?q=${encodeURIComponent(randomWord)}&form=QBLH&qs=n`;
+    
+    const headers = getSearchHeaders(deviceType, config);
+    
+    try {
+        const response = await $.http.get({
+            url: searchUrl,
+            headers: headers,
+            timeout: 10000
+        });
+        
+        if (response.status === 200) {
+            if (config.enableDebug) {
+                $.log(`✅ ${getDeviceName(deviceType)}第${round}次搜索成功`);
+            }
+            return true;
+        } else {
+            $.log(`❌ ${getDeviceName(deviceType)}搜索失败，状态码: ${response.status}`);
+            return false;
+        }
+    } catch (error) {
+        $.log(`💥 ${getDeviceName(deviceType)}搜索异常: ${error.message}`);
+        return false;
+    }
+}
+
+function getSearchHeaders(deviceType, config) {
+    const baseHeaders = {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+        "cache-control": "no-cache",
+        "pragma": "no-cache"
+    };
+    
+    const deviceConfigs = {
+        'pc': {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "cookie": config.pcCookie
+        },
+        'mobile': {
+            "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.3 Mobile/15E148 Safari/604.1",
+            "cookie": config.mobileCookie
+        },
+        'edge': {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+            "cookie": config.pcCookie
+        }
+    };
+    
+    return { ...baseHeaders, ...deviceConfigs[deviceType] };
+}
+
+function generateSearchKeyword() {
+    const prefixes = ['什么是', '如何', '为什么', '最好的', '最新的', '学习', '了解'];
+    const topics = ['人工智能', '机器学习', '编程', '科技', '健康', '旅游', '美食', '音乐'];
+    const suffixes = ['的方法', '的技巧', '的原理', '的发展', '的应用'];
+    
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const topic = topics[Math.floor(Math.random() * topics.length)];
+    const suffix = Math.random() > 0.5 ? suffixes[Math.floor(Math.random() * suffixes.length)] : '';
+    const randomNum = Math.floor(Math.random() * 1000);
+    
+    return `${prefix}${topic}${suffix} ${randomNum}`;
+}
+
+async function getDashboard(pointCookie, $) {
+    if (!pointCookie) return null;
+    
+    const headers = {
+        "authority": 'rewards.bing.com',
+        "accept": 'application/json, text/javascript, */*; q=0.01',
+        "cookie": pointCookie,
+        "user-agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    };
+    
+    try {
+        const response = await $.http.get({
+            url: `https://rewards.bing.com/?_=${Date.now()}`,
+            headers: headers
+        });
+        
+        if (response.status === 200) {
+            const data = response.body;
+            const rvtMatch = data.match(/__RequestVerificationToken.*?value="([^"]*)"/);
+            const dashboardMatch = data.match(/var dashboard = ({[^;]*});/);
+            
+            if (rvtMatch && dashboardMatch) {
+                return {
+                    dashboard: JSON.parse(dashboardMatch[1]),
+                    rvt: rvtMatch[1]
+                };
+            }
+        }
+    } catch (e) {
+        $.log("❌ 获取积分面板失败");
+    }
+    
+    return null;
+}
+
+async function reportActivity(task, rvt, pointCookie, $) {
+    const headers = {
+        "authority": 'rewards.bing.com',
+        "content-type": 'application/x-www-form-urlencoded',
+        "cookie": pointCookie,
+        "x-requested-with": 'XMLHttpRequest'
+    };
+    
+    const body = `id=${task.name}&hash=${task.hash}&timeZone=480&activityAmount=1&__RequestVerificationToken=${rvt}`;
+    
+    try {
+        const response = await $.http.post({
+            url: `https://rewards.bing.com/api/reportactivity?_=${Date.now()}`,
+            headers: headers,
+            body: body
+        });
+        
+        return response.status === 200;
+    } catch (e) {
+        return false;
+    }
+}
+
+async function showCurrentPoints(pointCookie, $) {
+    const dashboard = await getDashboard(pointCookie, $);
+    if (dashboard?.dashboard) {
+        const points = dashboard.dashboard.userStatus?.availablePoints || "未知";
+        $.msg(
+            "Bing积分状态",
+            `当前积分: ${points}`,
+            "今日任务已完成"
+        );
+    }
+}
+
+async function showFinalResults(results, totalPoints, pointCookie, $) {
+    const dashboard = await getDashboard(pointCookie, $);
+    const currentPoints = dashboard?.dashboard?.userStatus?.availablePoints || "未知";
+    
+    $.setVal(currentPoints, 'bingCachePoints');
+    
+    const message = `
+任务积分: ${results.points}分
+PC搜索: ${results.pc}分  
+移动搜索: ${results.mobile}分
+Edge搜索: ${results.edge}分
+总计获得: ${totalPoints}分
+当前积分: ${currentPoints}
+    `.trim();
+    
+    $.msg("Bing积分任务完成", message);
+}
+
+// 工具函数
+function initToolkit() {
+    return {
+        msg: (title, subtitle, body) => {
+            if (typeof $notification !== 'undefined') {
+                $notification.post(title, subtitle, body);
+            }
+        },
+        log: (message) => console.log(message),
+        setdata: (key, val) => {
+            if (typeof $persistentStore !== 'undefined') {
+                return $persistentStore.write(val, key);
+            }
+            if (typeof $prefs !== 'undefined') {
+                return $prefs.setValueForKey(val, key);
+            }
+        },
+        getdata: (key) => {
+            if (typeof $persistentStore !== 'undefined') {
+                return $persistentStore.read(key);
+            }
+            if (typeof $prefs !== 'undefined') {
+                return $prefs.valueForKey(key);
+            }
+        },
+        done: () => {
+            if (typeof $done !== 'undefined') $done();
+        }
+    };
+}
+
+// Toolkit类
+function Toolkit(name, id, options) {
+    return new class {
+        constructor(name, id, options) {
+            this.name = name;
+            this.id = id;
+            this.options = options || {};
+            this.logs = [];
+            this.startTime = Date.now();
+            this.log("", `🔔 ${this.name} 开始执行`);
+        }
+        
+        log(...args) {
+            const message = args.join(" ");
+            this.logs.push(message);
+            console.log(message);
+        }
+        
+        getVal(key, defaultValue = "") {
+            if (typeof $persistentStore !== 'undefined') {
+                return $persistentStore.read(key) || defaultValue;
+            }
+            if (typeof $prefs !== 'undefined') {
+                return $prefs.valueForKey(key) || defaultValue;
+            }
+            return defaultValue;
+        }
+        
+        setVal(value, key) {
+            if (typeof $persistentStore !== 'undefined') {
+                return $persistentStore.write(value, key);
+            }
+            if (typeof $prefs !== 'undefined') {
+                return $prefs.setValueForKey(value, key);
+            }
+            return true;
+        }
+        
+        msg(title, subtitle, body) {
+            if (typeof $notification !== 'undefined') {
+                $notification.post(title, subtitle, body);
+            }
+            this.log(`📢 ${title}: ${subtitle} - ${body}`);
+        }
+        
+        async sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        formatDate(date, fmt) {
+            const o = {
+                "M+": date.getMonth() + 1,
+                "d+": date.getDate(),
+                "H+": date.getHours(),
+                "m+": date.getMinutes(), 
+                "s+": date.getSeconds(),
+                "q+": Math.floor((date.getMonth() + 3) / 3),
+                "S": date.getMilliseconds()
+            };
+            if (/(y+)/.test(fmt)) {
+                fmt = fmt.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
+            }
+            for (const k in o) {
+                if (new RegExp("(" + k + ")").test(fmt)) {
+                    fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+                }
+            }
+            return fmt;
+        }
+        
+        // HTTP请求方法
+        http = {
+            get: (options) => {
+                return new Promise((resolve) => {
+                    if (typeof $httpClient !== 'undefined') {
+                        $httpClient.get(options, (error, response, body) => {
+                            resolve({ error, status: response?.status, body });
+                        });
+                    } else if (typeof $task !== 'undefined') {
+                        $task.fetch(options).then(response => {
+                            resolve({ error: null, status: response.statusCode, body: response.body });
+                        }, error => {
+                            resolve({ error, status: null, body: null });
+                        });
+                    } else {
+                        resolve({ error: "No HTTP client", status: null, body: null });
+                    }
+                });
+            },
+            
+            post: (options) => {
+                return new Promise((resolve) => {
+                    if (typeof $httpClient !== 'undefined') {
+                        $httpClient.post(options, (error, response, body) => {
+                            resolve({ error, status: response?.status, body });
+                        });
+                    } else if (typeof $task !== 'undefined') {
+                        options.method = 'POST';
+                        $task.fetch(options).then(response => {
+                            resolve({ error: null, status: response.statusCode, body: response.body });
+                        }, error => {
+                            resolve({ error, status: null, body: null });
+                        });
+                    } else {
+                        resolve({ error: "No HTTP client", status: null, body: null });
+                    }
+                });
+            }
+        };
+    }(name, id, options);
 }
