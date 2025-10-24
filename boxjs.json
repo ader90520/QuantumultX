@@ -101,8 +101,8 @@
       ]
     },
     {
-      "id": "bing_cookie",
-      "name": "Bing Cookie获取",
+      "id": "bing_search_cookie",
+      "name": "Bing搜索Cookie获取",
       "author": "@ader90520",
       "repo": "https://github.com/ader90520/QuantumultX",
       "icons": [
@@ -133,16 +133,16 @@
           "desc": "搜索关键词'pc'时自动获取的PC端Cookie"
         }
       ],
-      "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingCookie.js",
+      "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingSearchCookie.js",
       "desc_html": [
         "<h3 style='margin-left:20px;'>Bing搜索Cookie自动获取</h3>",
-        "<p style='margin-left:20px;'>自动获取Bing搜索的Cookie，用于积分任务脚本</p>",
+        "<p style='margin-left:20px;'>自动获取Bing搜索的Cookie，用于搜索任务</p>",
         
         "<h4 style='margin-left:20px;'>重写配置</h4>",
         "<pre style='margin-left:40px; background: #f8f9fa; padding: 15px; border-radius: 5px;'>",
         "[rewrite local]\n",
-        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=pc&.* url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingCookie.js\n",
-        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=testt&.* url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingCookie.js\n",
+        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=pc&.* url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingSearchCookie.js\n",
+        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=testt&.* url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingSearchCookie.js\n",
         "[MITM]\n",
         "hostname = cn.bing.com",
         "</pre>",
@@ -161,14 +161,61 @@
         "<li>PC端和移动端需要分别获取</li>",
         "<li>获取成功后可以禁用重写规则，避免重复触发</li>",
         "<li>Cookie有效期较长，一般可使用1-3个月</li>",
-        "</ul>",
+        "</ul>"
+      ]
+    },
+    {
+      "id": "bing_point_cookie",
+      "name": "Bing积分面板Cookie获取",
+      "author": "@ader90520",
+      "repo": "https://github.com/ader90520/QuantumultX",
+      "icons": [
+        "https://raw.githubusercontent.com/lowking/Scripts/master/doc/icon/bingPoint.png",
+        "https://raw.githubusercontent.com/lowking/Scripts/master/doc/icon/bingPoint.png"
+      ],
+      "keys": [
+        "bingPointCookieKey"
+      ],
+      "settings": [
+        {
+          "id": "bingPointCookieKey",
+          "name": "积分面板Cookie",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "placeholder": "自动获取",
+          "desc": "访问rewards.bing.com时自动获取的积分面板Cookie"
+        }
+      ],
+      "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingPointCookie.js",
+      "desc_html": [
+        "<h3 style='margin-left:20px;'>Bing积分面板Cookie自动获取</h3>",
+        "<p style='margin-left:20px;'>自动获取Bing积分面板的Cookie，用于积分任务</p>",
         
-        "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
-        "<p><strong>💡 提示：</strong></p>",
+        "<h4 style='margin-left:20px;'>重写配置</h4>",
+        "<pre style='margin-left:40px; background: #f8f9fa; padding: 15px; border-radius: 5px;'>",
+        "[rewrite local]\n",
+        "^https\\:\\/\\/rewards\\.bing\\.com url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingPointCookie.js\n",
+        "[MITM]\n",
+        "hostname = rewards.bing.com",
+        "</pre>",
+        
+        "<h4 style='margin-left:20px;'>使用步骤</h4>",
+        "<ol style='margin-left:40px;'>",
+        "<li>在浏览器中访问 <a href='https://rewards.bing.com'>https://rewards.bing.com</a></li>",
+        "<li>确保已登录Microsoft账号</li>",
+        "<li>系统会自动捕获积分面板Cookie</li>",
+        "<li>成功后会收到通知，提示获取成功并建议禁用脚本</li>",
+        "<li>Cookie将自动保存到BoxJS</li>",
+        "</ol>",
+        
+        "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;'>",
+        "<p><strong>⚠️ 重要提示：</strong></p>",
         "<ul>",
-        "<li>获取的Cookie会自动传递给Bing积分任务脚本使用</li>",
-        "<li>建议定期检查Cookie是否过期，及时重新获取</li>",
-        "<li>获取成功后可以在上方看到自动填充的Cookie值</li>",
+        "<li>获取成功后请立即禁用此重写规则，避免重复触发</li>",
+        "<li>积分面板Cookie用于获取任务列表和报告活动完成</li>",
+        "<li>此Cookie与搜索Cookie不同，需要单独获取</li>",
+        "<li>获取一次即可长期使用，除非Cookie过期</li>",
         "</ul>",
         "</div>"
       ]
@@ -184,7 +231,6 @@
       ],
       "keys": [
         "bingResetHours",
-        "bingPointCookie",
         "bingPcSearchCount", 
         "bingMobileSearchCount",
         "bingEdgeSearchCount",
@@ -208,15 +254,6 @@
           "val": true,
           "type": "boolean",
           "desc": "开启使用cn.bing.com，关闭使用www.bing.com"
-        },
-        {
-          "id": "bingPointCookie",
-          "name": "Bing积分Cookie",
-          "val": "",
-          "type": "textarea",
-          "autoGrow": true,
-          "placeholder": "访问rewards.bing.com获取的Cookie",
-          "desc": "用于获取积分面板和执行积分任务"
         },
         {
           "id": "bingPcSearchCount",
@@ -273,8 +310,8 @@
         
         "<h4 style='margin-left:20px;'>Cookie配置说明</h4>",
         "<ul style='margin-left:40px;'>",
-        "<li><strong>搜索Cookie</strong>：使用上方的Bing Cookie获取脚本自动获取</li>",
-        "<li><strong>积分Cookie</strong>：手动访问 <a href='https://rewards.bing.com'>rewards.bing.com</a> 获取</li>",
+        "<li><strong>搜索Cookie</strong>：使用上方的Bing搜索Cookie获取脚本自动获取</li>",
+        "<li><strong>积分面板Cookie</strong>：使用上方的Bing积分面板Cookie获取脚本自动获取</li>",
         "</ul>",
         
         "<h4 style='margin-left:20px;'>功能特点</h4>",
@@ -289,10 +326,10 @@
         "<h4 style='margin-left:20px;'>执行流程</h4>",
         "<ol style='margin-left:40px;'>",
         "<li>检查重置条件，清除昨日状态</li>",
-        "<li>执行积分任务（需要积分Cookie）</li>",
-        "<li>执行PC端搜索（需要PC Cookie）</li>",
-        "<li>执行移动端搜索（需要移动Cookie）</li>",
-        "<li>执行Edge端搜索（使用PC Cookie）</li>",
+        "<li>执行积分任务（需要积分面板Cookie）</li>",
+        "<li>执行PC端搜索（需要PC搜索Cookie）</li>",
+        "<li>执行移动端搜索（需要移动搜索Cookie）</li>",
+        "<li>执行Edge端搜索（使用PC搜索Cookie）</li>",
         "<li>保存执行状态，显示积分结果</li>",
         "</ol>",
         
@@ -300,8 +337,8 @@
         "<p><strong>💡 使用技巧：</strong></p>",
         "<ul>",
         "<li>建议设置搜索间隔3-5秒，避免被检测</li>",
-        "<li>积分Cookie用于获取任务面板和报告活动</li>",
-        "<li>PC Cookie同时用于PC端和Edge端搜索</li>",
+        "<li>积分面板Cookie用于获取任务列表和报告活动</li>",
+        "<li>搜索Cookie用于执行搜索任务获取积分</li>",
         "<li>可设置定时任务，每日自动执行获取积分</li>",
         "</ul>",
         "</div>",
@@ -311,7 +348,7 @@
         "<ul>",
         "<li>确保Cookie正确有效，否则任务会失败</li>",
         "<li>不要设置过短的搜索间隔，可能触发风控</li>",
-        "<li>定期检查Cookie是否过期，及时更新</li>",
+        "<li>定期检查Cookie是否过期，及时重新获取</li>",
         "<li>如遇问题，开启调试日志查看详细执行过程</li>",
         "</ul>",
         "</div>"
