@@ -101,6 +101,79 @@
       ]
     },
     {
+      "id": "bing_cookie",
+      "name": "Bing Cookie获取",
+      "author": "@ader90520",
+      "repo": "https://github.com/ader90520/QuantumultX",
+      "icons": [
+        "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Google_Opinion_Rewards.png",
+        "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Google_Opinion_Rewards.png"
+      ],
+      "keys": [
+        "bingSearchCookieMobileKey",
+        "bingSearchCookiePCKey"
+      ],
+      "settings": [
+        {
+          "id": "bingSearchCookieMobileKey",
+          "name": "移动端Cookie",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "placeholder": "自动获取",
+          "desc": "搜索关键词'testt'时自动获取的移动端Cookie"
+        },
+        {
+          "id": "bingSearchCookiePCKey",
+          "name": "PC端Cookie",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "placeholder": "自动获取",
+          "desc": "搜索关键词'pc'时自动获取的PC端Cookie"
+        }
+      ],
+      "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingCookie.js",
+      "desc_html": [
+        "<h3 style='margin-left:20px;'>Bing搜索Cookie自动获取</h3>",
+        "<p style='margin-left:20px;'>自动获取Bing搜索的Cookie，用于积分任务脚本</p>",
+        
+        "<h4 style='margin-left:20px;'>重写配置</h4>",
+        "<pre style='margin-left:40px; background: #f8f9fa; padding: 15px; border-radius: 5px;'>",
+        "[rewrite local]\n",
+        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=pc&.* url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingCookie.js\n",
+        "^https\\:\\/\\/cn\\.bing\\.com\\/search\\?q=testt&.* url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bingCookie.js\n",
+        "[MITM]\n",
+        "hostname = cn.bing.com",
+        "</pre>",
+        
+        "<h4 style='margin-left:20px;'>使用步骤</h4>",
+        "<ol style='margin-left:40px;'>",
+        "<li><strong>PC端Cookie获取</strong>：在浏览器中访问 <code>https://cn.bing.com/search?q=pc</code></li>",
+        "<li><strong>移动端Cookie获取</strong>：在浏览器中访问 <code>https://cn.bing.com/search?q=testt</code></li>",
+        "<li>确保已登录Microsoft账号，系统会自动捕获Cookie</li>",
+        "<li>成功后会收到通知，Cookie将自动保存到BoxJS</li>",
+        "</ol>",
+        
+        "<h4 style='margin-left:20px;'>注意事项</h4>",
+        "<ul style='margin-left:40px;'>",
+        "<li>获取Cookie前请确保已登录Bing账号</li>",
+        "<li>PC端和移动端需要分别获取</li>",
+        "<li>获取成功后可以禁用重写规则，避免重复触发</li>",
+        "<li>Cookie有效期较长，一般可使用1-3个月</li>",
+        "</ul>",
+        
+        "<div style='margin-left:20px; margin-top: 20px; padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
+        "<p><strong>💡 提示：</strong></p>",
+        "<ul>",
+        "<li>获取的Cookie会自动传递给Bing积分任务脚本使用</li>",
+        "<li>建议定期检查Cookie是否过期，及时重新获取</li>",
+        "<li>获取成功后可以在上方看到自动填充的Cookie值</li>",
+        "</ul>",
+        "</div>"
+      ]
+    },
+    {
       "id": "bing_point",
       "name": "Bing积分完整版",
       "author": "@ader90520",
@@ -112,8 +185,6 @@
       "keys": [
         "bingResetHours",
         "bingPointCookie",
-        "bingSearchCookiePC",
-        "bingSearchCookieMobile",
         "bingPcSearchCount", 
         "bingMobileSearchCount",
         "bingEdgeSearchCount",
@@ -146,24 +217,6 @@
           "autoGrow": true,
           "placeholder": "访问rewards.bing.com获取的Cookie",
           "desc": "用于获取积分面板和执行积分任务"
-        },
-        {
-          "id": "bingSearchCookiePC",
-          "name": "PC端搜索Cookie",
-          "val": "",
-          "type": "textarea", 
-          "autoGrow": true,
-          "placeholder": "在PC浏览器访问bing.com获取的Cookie",
-          "desc": "用于PC端和Edge端搜索任务"
-        },
-        {
-          "id": "bingSearchCookieMobile",
-          "name": "移动端搜索Cookie",
-          "val": "",
-          "type": "textarea",
-          "autoGrow": true,
-          "placeholder": "在手机浏览器访问bing.com获取的Cookie",
-          "desc": "用于移动端搜索任务"
         },
         {
           "id": "bingPcSearchCount",
@@ -215,15 +268,14 @@
       ],
       "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js",
       "desc_html": [
-        "<h3 style='margin-left:20px;'>Bing积分完整优化版 v4.0</h3>",
+        "<h3 style='margin-left:20px;'>Bing积分完整优化版</h3>",
         "<p style='margin-left:20px;'>整合lowking和mcdasheng脚本优点，支持PC端、移动端、Edge端搜索 + 积分任务</p>",
         
-        "<h4 style='margin-left:20px;'>Cookie获取方法</h4>",
-        "<ol style='margin-left:40px;'>",
-        "<li><strong>积分Cookie</strong>：访问 <a href='https://rewards.bing.com'>rewards.bing.com</a> 登录后获取</li>",
-        "<li><strong>PC端Cookie</strong>：在PC浏览器访问 <a href='https://www.bing.com'>www.bing.com</a> 登录后获取</li>",
-        "<li><strong>移动端Cookie</strong>：在手机浏览器访问 <a href='https://www.bing.com'>www.bing.com</a> 登录后获取</li>",
-        "</ol>",
+        "<h4 style='margin-left:20px;'>Cookie配置说明</h4>",
+        "<ul style='margin-left:40px;'>",
+        "<li><strong>搜索Cookie</strong>：使用上方的Bing Cookie获取脚本自动获取</li>",
+        "<li><strong>积分Cookie</strong>：手动访问 <a href='https://rewards.bing.com'>rewards.bing.com</a> 获取</li>",
+        "</ul>",
         
         "<h4 style='margin-left:20px;'>功能特点</h4>",
         "<ul style='margin-left:40px;'>",
