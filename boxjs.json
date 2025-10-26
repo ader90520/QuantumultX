@@ -131,9 +131,9 @@
         {
           "id": "bing_pc_times",
           "name": "PC端搜索次数",
-          "val": 2,
+          "val": 0,
           "type": "number",
-          "placeholder": "2",
+          "placeholder": "0",
           "desc": "PC端每次执行搜索次数，设置为0则跳过PC搜索"
         },
         {
