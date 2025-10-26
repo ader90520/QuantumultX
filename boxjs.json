@@ -116,11 +116,16 @@
         "bing_cn",
         "bing_pc_times",
         "bing_mobile_times",
+        "bing_pc_goal",
+        "bing_mobile_goal",
+        "bing_pc_progress",
+        "bing_mobile_progress",
         "bing_interval",
         "bing_reset_hours",
         "bing_cache_point",
         "bing_auto_skip",
-        "bing_last_success_date"
+        "bing_last_success_date",
+        "bing_last_reset_date"
       ],
       "settings": [
         {
@@ -132,19 +137,35 @@
         },
         {
           "id": "bing_pc_times",
-          "name": "PC端搜索次数",
-          "val": 0,
+          "name": "每次PC搜索次数",
+          "val": 3,
           "type": "number",
-          "placeholder": "0",
-          "desc": "PC端每次执行搜索次数，设置为0则跳过PC搜索"
+          "placeholder": "3",
+          "desc": "每次执行时PC端搜索次数，建议3-5次避免被限制"
         },
         {
           "id": "bing_mobile_times",
-          "name": "移动端搜索次数",
-          "val": 0,
+          "name": "每次移动搜索次数",
+          "val": 3,
           "type": "number",
-          "placeholder": "0", 
-          "desc": "移动端每次执行搜索次数，设置为0则跳过移动搜索"
+          "placeholder": "3", 
+          "desc": "每次执行时移动端搜索次数，建议3-5次避免被限制"
+        },
+        {
+          "id": "bing_pc_goal",
+          "name": "每日PC目标次数",
+          "val": 30,
+          "type": "number",
+          "placeholder": "30",
+          "desc": "PC端每日总目标搜索次数，用于进度跟踪"
+        },
+        {
+          "id": "bing_mobile_goal", 
+          "name": "每日移动目标次数",
+          "val": 20,
+          "type": "number",
+          "placeholder": "20",
+          "desc": "移动端每日总目标搜索次数，用于进度跟踪"
         },
         {
           "id": "bing_interval",
@@ -178,12 +199,36 @@
           "desc": "自动记录的上次积分，无需手动修改"
         },
         {
+          "id": "bing_pc_progress",
+          "name": "PC今日进度",
+          "val": 0,
+          "type": "number", 
+          "placeholder": "0",
+          "desc": "自动记录PC端今日已完成次数，无需手动修改"
+        },
+        {
+          "id": "bing_mobile_progress",
+          "name": "移动今日进度",
+          "val": 0,
+          "type": "number",
+          "placeholder": "0", 
+          "desc": "自动记录移动端今日已完成次数，无需手动修改"
+        },
+        {
           "id": "bing_last_success_date",
           "name": "最后成功日期",
           "val": "",
           "type": "text",
           "placeholder": "自动记录",
           "desc": "自动记录最后成功获得积分的日期，用于自动跳过功能"
+        },
+        {
+          "id": "bing_last_reset_date",
+          "name": "最后重置日期",
+          "val": "",
+          "type": "text",
+          "placeholder": "自动记录",
+          "desc": "自动记录最后重置进度日期，用于每日重置功能"
         },
         {
           "id": "bingPointCookieKey",
@@ -218,67 +263,73 @@
           "val": false,
           "type": "boolean",
           "desc": "开启后下次执行将运行Cookie诊断，检查所有Cookie状态和配置"
+        },
+        {
+          "id": "@bing.reset_progress",
+          "name": "手动重置进度",
+          "val": false,
+          "type": "boolean",
+          "desc": "开启后将立即重置今日进度（下次执行时生效）"
         }
       ],
       "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js",
       "desc_html": [
-        "<h3>🏆 Bing积分智能版 v5.3</h3>",
-        "<p>智能跳过0次搜索配置，完全按照BoxJS设置执行，支持任务完成后自动跳过</p>",
+        "<h3>🏆 Bing积分智能版 v5.5</h3>",
+        "<p>智能进度跟踪，每次少量搜索避免限制，显示完整每日进度</p>",
+        "<p style='color: #28a745;'><strong>新增：每日进度跟踪功能，每次执行少量搜索但显示完整进度</strong></p>",
         
         "<h4>🔄 智能执行逻辑</h4>",
         "<ul>",
-        "<li><strong>PC搜索次数为0</strong>：完全跳过PC搜索</li>",
-        "<li><strong>移动搜索次数为0</strong>：完全跳过移动搜索</li>",
-        "<li><strong>Cookie无效</strong>：自动跳过对应端搜索</li>",
-        "<li><strong>任务已完成</strong>：当天获得积分后自动跳过后续执行</li>",
-        "<li><strong>配置检查</strong>：执行前显示当前配置状态</li>",
+        "<li><strong>分批次执行</strong>：每次只执行3-5次搜索，避免被Bing限制</li>",
+        "<li><strong>进度跟踪</strong>：自动记录每日总进度，即使分多次执行</li>",
+        "<li><strong>智能计算</strong>：自动计算剩余积分和完成状态</li>",
+        "<li><strong>自动重置</strong>：每天在指定时间自动重置进度</li>",
         "</ul>",
         
-        "<h4>⚙️ 自动跳过功能</h4>",
-        "<div style='padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
-        "<p><strong>工作原理：</strong></p>",
-        "<ol>",
-        "<li>脚本成功获得积分后，记录当前日期</li>",
-        "<li>后续执行时检查日期，如果是同一天则自动跳过</li>",
-        "<li>第二天自动重置，重新开始执行</li>",
-        "</ol>",
-        "<p><strong>手动控制：</strong></p>",
-        "<ul>",
-        "<li>开启/关闭：通过「任务完成后自动跳过」开关控制</li>",
-        "<li>强制重置：删除「最后成功日期」的值</li>",
-        "</ul>",
-        "</div>",
-        
-        "<h4>⚙️ 配置示例</h4>",
+        "<h4>📊 通知显示格式</h4>",
         "<div style='padding: 10px; background: #e9ecef; border-radius: 5px;'>",
-        "<p><strong>仅PC搜索：</strong></p>",
-        "<ul>",
-        "<li>PC搜索次数：2</li>",
-        "<li>移动搜索次数：0</li>",
-        "</ul>",
-        "<p><strong>仅移动搜索：</strong></p>",
-        "<ul>",
-        "<li>PC搜索次数：0</li>",
-        "<li>移动搜索次数：2</li>",
-        "</ul>",
-        "<p><strong>两者都执行：</strong></p>",
-        "<ul>",
-        "<li>PC搜索次数：2</li>",
-        "<li>移动搜索次数：2</li>",
-        "</ul>",
+        "<p><strong>获得积分时：</strong></p>",
+        "<pre>获得 12 积分\n前次积分: 1000\n本次获得: +12积分\n当前总积分: 1012\nPC: 2/30次\n移动: 2/20次\n剩余积分: 138 (150-12)</pre>",
+        "<p><strong>未获得积分时：</strong></p>",
+        "<pre>搜索完成 (0次)\n未获得积分 - BoxJS中搜索次数设置为0\n当前总积分: 7031\nPC: 0/30次\n移动: 0/20次\n剩余积分: 150 (150-0)\n✅ 今日任务未开始</pre>",
         "</div>",
         
-        "<h4>📊 执行日志示例</h4>",
-        "<pre>🚀 开始执行智能版搜索 v5.3\n📊 配置: PC2次, 移动0次\n🔧 自动跳过: 开启\n⏭️ 移动搜索次数为0，跳过移动搜索\n✅ PC搜索获得积分: 6 (2次成功)\n📅 记录今日 Mon Dec 04 2023 任务完成，下次将自动跳过\n✅ 脚本执行完成</pre>",
+        "<h4>⚙️ 推荐配置</h4>",
+        "<div style='padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
+        "<p><strong>标准配置（推荐）：</strong></p>",
+        "<ul>",
+        "<li><strong>每次PC搜索次数</strong>：3次</li>",
+        "<li><strong>每次移动搜索次数</strong>：3次</li>",
+        "<li><strong>每日PC目标次数</strong>：30次</li>",
+        "<li><strong>每日移动目标次数</strong>：20次</li>",
+        "<li><strong>搜索间隔</strong>：5秒</li>",
+        "<li><strong>定时任务</strong>：每2分钟执行一次</li>",
+        "</ul>",
+        "<p><strong>效果</strong>：每次执行获得约18积分，约10次执行完成每日目标</p>",
+        "</div>",
+        
+        "<h4>🎯 工作原理</h4>",
+        "<div style='padding: 10px; background: #e9ecef; border-radius: 5px;'>",
+        "<ol>",
+        "<li><strong>进度记录</strong>：每次执行后自动记录完成次数到BoxJS</li>",
+        "<li><strong>智能计算</strong>：根据剩余目标计算本次实际执行次数</li>",
+        "<li><strong>分批执行</strong>：每次只执行配置的少量次数，避免触发限制</li>",
+        "<li><strong>完整显示</strong>：通知中显示每日总进度，而不是单次进度</li>",
+        "<li><strong>自动完成</strong>：当达到每日目标后自动跳过后续执行</li>",
+        "</ol>",
+        "</div>",
+        
+        "<h4>📈 执行示例</h4>",
+        "<pre>第1次执行：PC0/30 → PC3/30，移动0/20 → 移动3/20\n第2次执行：PC3/30 → PC6/30，移动3/20 → 移动6/20\n...\n第10次执行：PC27/30 → PC30/30，移动18/20 → 移动20/20\n✅ 今日任务完成，自动跳过后续执行</pre>",
         
         "<div style='padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; margin-top: 15px;'>",
-        "<p><strong>🎯 使用场景</strong></p>",
+        "<p><strong>💡 使用技巧</strong></p>",
         "<ul>",
-        "<li><strong>定时任务优化</strong>：配置每2分钟执行，但每天只真正执行一次</li>",
-        "<li><strong>网络不稳定</strong>：只配置一端搜索减少超时风险</li>",
-        "<li><strong>Cookie问题</strong>：暂时禁用问题端的搜索</li>",
-        "<li><strong>积分上限</strong>：某端已达上限时禁用该端</li>",
-        "<li><strong>测试目的</strong>：单独测试PC或移动端搜索效果</li>",
+        "<li><strong>避免限制</strong>：设置每次3-5次搜索，避免被Bing检测为机器人</li>",
+        "<li><strong>定时优化</strong>：配合每2-5分钟的定时任务，平稳完成每日目标</li>",
+        "<li><strong>进度查看</strong>：在BoxJS中实时查看PC和移动端的完成进度</li>",
+        "<li><strong>手动重置</strong>：如需重新开始，使用「手动重置进度」开关</li>",
+        "<li><strong>数据持久</strong>：所有进度数据保存在BoxJS中，重启设备不丢失</li>",
         "</ul>",
         "</div>"
       ]
