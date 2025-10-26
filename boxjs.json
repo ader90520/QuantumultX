@@ -102,7 +102,7 @@
     },
     {
       "id": "bing_complete",
-      "name": "Bing积分完整版",
+      "name": "Bing积分核心修复版",
       "author": "@ader90520",
       "repo": "https://github.com/ader90520/QuantumultX",
       "icons": [
@@ -131,18 +131,18 @@
         {
           "id": "bing_pc_times",
           "name": "PC端搜索次数",
-          "val": 30,
+          "val": 2,
           "type": "number",
-          "placeholder": "30",
-          "desc": "PC端每日搜索次数，建议30次"
+          "placeholder": "2",
+          "desc": "PC端每次执行搜索次数，建议2次避免超时"
         },
         {
           "id": "bing_mobile_times",
           "name": "移动端搜索次数",
-          "val": 20,
+          "val": 2,
           "type": "number",
-          "placeholder": "20", 
-          "desc": "移动端每日搜索次数，建议20次"
+          "placeholder": "2", 
+          "desc": "移动端每次执行搜索次数，建议2次避免超时"
         },
         {
           "id": "bing_interval",
@@ -183,8 +183,8 @@
           "val": "",
           "type": "textarea",
           "autoGrow": true,
-          "placeholder": "自动获取 - 搜索关键词'pc'",
-          "desc": "用于PC端搜索任务"
+          "placeholder": "自动获取 - 在PC浏览器访问Bing搜索",
+          "desc": "用于PC端搜索任务，请使用PC浏览器获取"
         },
         {
           "id": "bingSearchCookieMobileKey",
@@ -192,31 +192,66 @@
           "val": "",
           "type": "textarea",
           "autoGrow": true,
-          "placeholder": "自动获取 - 搜索关键词'testt'",
-          "desc": "用于移动端搜索任务"
+          "placeholder": "自动获取 - 在移动浏览器访问Bing搜索",
+          "desc": "用于移动端搜索任务，请使用移动浏览器获取"
+        },
+        {
+          "id": "@bing.diagnose",
+          "name": "运行诊断模式",
+          "val": false,
+          "type": "boolean",
+          "desc": "开启后下次执行将运行Cookie诊断，检查所有Cookie状态"
         }
       ],
       "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js",
       "desc_html": [
-        "<h3>🏆 Bing积分完整版</h3>",
-        "<p>PC端+移动端+积分任务，完整版本支持所有积分获取方式</p>",
+        "<h3>🏆 Bing积分核心修复版 v5.0</h3>",
+        "<p>专注于解决搜索积分触发和查询问题，确保每次搜索都能正确获得积分</p>",
         
-        "<h4>Cookie获取步骤</h4>",
+        "<h4>🔄 执行流程</h4>",
         "<ol>",
-        "<li><strong>积分面板Cookie</strong>：访问 <a href='https://rewards.bing.com'>rewards.bing.com</a> 登录</li>",
-        "<li><strong>PC端搜索Cookie</strong>：访问 <code>https://cn.bing.com/search?q=pc</code></li>",
-        "<li><strong>移动端搜索Cookie</strong>：访问 <code>https://cn.bing.com/search?q=testt</code></li>",
-        "<li>确保已登录Microsoft账号，系统会自动捕获Cookie并保存</li>",
-        "<li>获取成功后建议禁用重写规则，避免重复触发</li>",
+        "<li><strong>Cookie验证</strong>：首先检查所有Cookie有效性</li>",
+        "<li><strong>PC搜索验证</strong>：执行PC搜索并立即验证积分变化</li>",
+        "<li><strong>移动搜索验证</strong>：执行移动搜索并立即验证积分变化</li>",
+        "<li><strong>智能通知</strong>：根据结果发送详细通知</li>",
         "</ol>",
         
-        "<div style='padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; margin-top: 15px;'>",
-        "<p><strong>重要注意事项</strong></p>",
+        "<h4>🔧 配置说明</h4>",
         "<ul>",
-        "<li>Bing每天只能在一个地区进行积分任务</li>",
-        "<li>需要分别获取PC端和移动端Cookie</li>",
+        "<li><strong>搜索次数</strong>：设置为2次避免超时，可通过定时任务累积</li>",
+        "<li><strong>搜索间隔</strong>：5秒避免请求过快被限制</li>",
+        "<li><strong>诊断模式</strong>：开启后可检查Cookie状态和积分获取情况</li>",
+        "</ul>",
+        
+        "<h4>📱 Quantumult X 配置</h4>",
+        "<pre>[task_local]\n# 每10分钟执行一次搜索\n*/10 * * * * https://raw.githubusercontent.com/ader90520/QuantumultX/main/Stripts/myScripts/Bing/bing.js, tag=🏆Bing积分, enabled=true\n\n# 诊断模式（需要时启用）\n# 0 8 * * * https://raw.githubusercontent.com/ader90520/QuantumultX/main/Stripts/myScripts/Bing/bing.js#diagnose, tag=🔍Bing诊断, enabled=false\n\n[rewrite_local]\n# Bing积分Cookie获取\n^https://rewards\\.bing\\.com url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/main/Stripts/myScripts/Bing/bing.js\n^https://cn\\.bing\\.com/search.*q=pc url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/main/Stripts/myScripts/Bing/bing.js\n^https://cn\\.bing\\.com/search.*q=testt url script-request-header https://raw.githubusercontent.com/ader90520/QuantumultX/main/Stripts/myScripts/Bing/bing.js</pre>",
+        
+        "<h4>🔍 故障排除</h4>",
+        "<div style='padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;'>",
+        "<p><strong>常见问题及解决方案：</strong></p>",
+        "<ul>",
+        "<li><strong>搜索成功但无积分</strong>：可能已达今日上限，检查诊断模式</li>",
+        "<li><strong>脚本卡住</strong>：已设置60秒强制超时，不会永久卡住</li>",
+        "<li><strong>Cookie失效</strong>：使用诊断模式检查，重新获取Cookie</li>",
+        "<li><strong>网络超时</strong>：调整搜索间隔或减少搜索次数</li>",
+        "</ul>",
+        "</div>",
+        
+        "<h4>🎯 使用建议</h4>",
+        "<ul>",
+        "<li>设置每10-15分钟执行一次，避免单次执行时间过长</li>",
+        "<li>首次使用请运行诊断模式检查Cookie状态</li>",
         "<li>获取Cookie成功后建议禁用重写规则</li>",
-        "<li>确保所有Cookie正确有效，否则任务会失败</li>",
+        "<li>如遇问题，查看Quantumult X日志获取详细错误信息</li>",
+        "</ul>",
+        
+        "<div style='padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; margin-top: 15px;'>",
+        "<p><strong>📊 积分获取规则</strong></p>",
+        "<ul>",
+        "<li>PC搜索：每次3积分，每日上限90积分</li>",
+        "<li>移动搜索：每次3积分，每日上限60积分</li>",
+        "<li>每日总计：最多150积分</li>",
+        "<li>重置时间：UTC+8 早上8点</li>",
         "</ul>",
         "</div>"
       ]
