@@ -1,18 +1,38 @@
 /*
-🏆 Bing积分智能版 v5.1 (修复移动端0次搜索问题)
-当移动端搜索次数为0时完全跳过移动端搜索
+🏆 Bing积分智能版 v5.2 (修复BoxJS配置同步问题)
+完全支持BoxJS参数配置，智能跳过0次搜索
 */
 
 const $ = new Env("Bing积分");
 
-// 配置读取
-const pc_cookie = $prefs.valueForKey("bingSearchCookiePCKey");
-const mobile_cookie = $prefs.valueForKey("bingSearchCookieMobileKey");
-const point_cookie = $prefs.valueForKey("bingPointCookieKey");
-const useCnDomain = $prefs.valueForKey("bing_cn") === "true";
-const pc_times = parseInt($prefs.valueForKey("bing_pc_times")) || 2;
-const mobile_times = parseInt($prefs.valueForKey("bing_mobile_times")) || 2;
-const host = useCnDomain ? "cn.bing.com" : "www.bing.com";
+// 配置读取 - 修复键名和默认值问题
+const getConfig = () => {
+    // 读取BoxJS配置，正确处理默认值
+    const pc_cookie = $prefs.valueForKey("bingSearchCookiePCKey");
+    const mobile_cookie = $prefs.valueForKey("bingSearchCookieMobileKey");
+    const point_cookie = $prefs.valueForKey("bingPointCookieKey");
+    
+    // 修复配置读取：正确处理布尔值和数字
+    const useCnDomain = $prefs.valueForKey("bing_cn") === "true";
+    const pc_times = parseInt($prefs.valueForKey("bing_pc_times")) || 0; // 默认改为0
+    const mobile_times = parseInt($prefs.valueForKey("bing_mobile_times")) || 0; // 默认改为0
+    const search_interval = parseInt($prefs.valueForKey("bing_interval")) || 5;
+    const reset_hours = parseInt($prefs.valueForKey("bing_reset_hours")) || 8;
+    
+    const host = useCnDomain ? "cn.bing.com" : "www.bing.com";
+    
+    return {
+        pc_cookie,
+        mobile_cookie,
+        point_cookie,
+        pc_times,
+        mobile_times,
+        search_interval,
+        reset_hours,
+        host,
+        useCnDomain
+    };
+};
 
 // 主执行
 if (typeof $request !== 'undefined') {
@@ -22,8 +42,17 @@ if (typeof $request !== 'undefined') {
 }
 
 function executeSmartSearch() {
-    console.log("🚀 开始执行智能版搜索");
-    console.log(`📊 配置: PC${pc_times}次, 移动${mobile_times}次`);
+    const config = getConfig();
+    
+    console.log("🚀 开始执行智能版搜索 v5.2");
+    console.log(`📊 BoxJS配置: PC${config.pc_times}次, 移动${config.mobile_times}次`);
+    console.log(`⚙️ 搜索间隔: ${config.search_interval}秒, 重置时间: ${config.reset_hours}点`);
+    
+    // 配置验证日志
+    if (config.pc_times === 0) console.log("⏭️ PC搜索次数为0，将跳过PC搜索");
+    if (config.mobile_times === 0) console.log("⏭️ 移动搜索次数为0，将跳过移动搜索");
+    if (!config.pc_cookie && config.pc_times > 0) console.log("❌ PC Cookie未设置，但PC搜索次数>0");
+    if (!config.mobile_cookie && config.mobile_times > 0) console.log("❌ 移动Cookie未设置，但移动搜索次数>0");
     
     // 设置45秒强制超时
     const timeoutId = setTimeout(() => {
@@ -31,88 +60,95 @@ function executeSmartSearch() {
         $done();
     }, 45000);
     
-    performSmartSearch().finally(() => {
+    performSmartSearch(config).finally(() => {
         clearTimeout(timeoutId);
         console.log("✅ 脚本执行完成");
         $done();
     });
 }
 
-async function performSmartSearch() {
+async function performSmartSearch(config) {
     try {
         // 1. 首先验证积分Cookie是否有效
-        if (point_cookie) {
-            const points = await getPointsWithDetailedCheck();
+        if (config.point_cookie) {
+            const points = await getPointsWithDetailedCheck(config.point_cookie);
             if (points === 0) {
                 console.log("❌ 积分Cookie无效，请重新获取");
                 $.notify("Bing积分", "Cookie无效", "请重新获取积分Cookie");
                 return;
             }
             console.log(`📊 当前积分: ${points}`);
+            // 更新缓存积分
+            $prefs.setValueForKey(points.toString(), "bing_cache_point");
         } else {
             console.log("⚠️ 未设置积分Cookie，无法跟踪积分");
         }
         
-        // 2. 执行PC搜索（如果配置了PC搜索次数）
-        let pcResult = { success: false, earned: 0 };
-        if (pc_cookie && pc_times > 0) {
-            pcResult = await performSingleSearchWithValidation('pc', pc_cookie, pc_times);
-        } else if (pc_times <= 0) {
-            console.log("⏭️ PC搜索次数为0，跳过PC搜索");
+        // 2. 执行PC搜索（严格根据BoxJS配置）
+        let pcResult = { success: false, earned: 0, count: 0 };
+        if (config.pc_cookie && config.pc_times > 0) {
+            pcResult = await performSingleSearchWithValidation('pc', config.pc_cookie, config.pc_times, config);
+            console.log(`💻 PC搜索完成: ${pcResult.count}/${config.pc_times}次成功`);
+        } else if (config.pc_times <= 0) {
+            console.log("⏭️ PC搜索次数为0，已跳过PC搜索");
         } else {
             console.log("❌ PC Cookie无效，跳过PC搜索");
         }
         
-        // 3. 执行移动搜索（如果配置了移动搜索次数）
-        let mobileResult = { success: false, earned: 0 };
-        if (mobile_cookie && mobile_times > 0) {
-            mobileResult = await performSingleSearchWithValidation('mobile', mobile_cookie, mobile_times);
-        } else if (mobile_times <= 0) {
-            console.log("⏭️ 移动搜索次数为0，跳过移动搜索");
+        // 3. 执行移动搜索（严格根据BoxJS配置）
+        let mobileResult = { success: false, earned: 0, count: 0 };
+        if (config.mobile_cookie && config.mobile_times > 0) {
+            mobileResult = await performSingleSearchWithValidation('mobile', config.mobile_cookie, config.mobile_times, config);
+            console.log(`📱 移动搜索完成: ${mobileResult.count}/${config.mobile_times}次成功`);
+        } else if (config.mobile_times <= 0) {
+            console.log("⏭️ 移动搜索次数为0，已跳过移动搜索");
         } else {
             console.log("❌ 移动Cookie无效，跳过移动搜索");
         }
         
         // 4. 发送最终通知
-        sendSmartNotification(pcResult, mobileResult);
+        sendSmartNotification(pcResult, mobileResult, config);
         
     } catch (error) {
         console.log(`⚠️ 执行异常: ${error}`);
+        $.notify("Bing积分错误", "执行异常", error.message);
     }
 }
 
-async function performSingleSearchWithValidation(device, cookie, times) {
-    console.log(`${device === 'pc' ? '💻' : '📱'} 执行${device}搜索 (${times}次)...`);
+async function performSingleSearchWithValidation(device, cookie, times, config) {
+    console.log(`${device === 'pc' ? '💻' : '📱'} 开始执行${device}搜索 (目标:${times}次)...`);
     
     const result = { success: false, earned: 0, count: 0 };
     
     try {
         // 获取搜索前积分
-        const beforePoints = point_cookie ? await getPointsQuick() : 0;
+        const beforePoints = config.point_cookie ? await getPointsQuick(config.point_cookie) : 0;
         
         // 执行指定次数的搜索
         let successCount = 0;
         for (let i = 1; i <= times; i++) {
-            const searchSuccess = await doCoreSearch(device, cookie, i);
+            const searchSuccess = await doCoreSearch(device, cookie, i, config.host);
             if (searchSuccess) {
                 successCount++;
                 result.count = successCount;
                 
-                // 搜索间等待
+                // 使用BoxJS配置的搜索间隔
                 if (i < times) {
-                    await delay(2000);
+                    const interval = config.search_interval * 1000; // 转换为毫秒
+                    console.log(`⏳ 等待${config.search_interval}秒后进行下一次搜索...`);
+                    await delay(interval);
                 }
             }
         }
         
         result.success = successCount > 0;
         
-        if (result.success && point_cookie) {
+        if (result.success && config.point_cookie) {
             // 等待足够时间让积分更新
             await delay(5000);
             
             // 获取搜索后积分
-            const afterPoints = await getPointsQuick();
+            const afterPoints = await getPointsQuick(config.point_cookie);
             
             if (afterPoints > beforePoints) {
                 result.earned = afterPoints - beforePoints;
@@ -129,12 +165,9 @@ async function performSingleSearchWithValidation(device, cookie, times) {
     return result;
 }
 
-function doCoreSearch(device, cookie, round) {
+function doCoreSearch(device, cookie, round, host) {
     return new Promise((resolve) => {
-        // 使用更真实的关键词格式
         const keyword = getCoreKeyword(round);
-        
-        // 使用标准Bing搜索格式
         const searchUrl = `https://${host}/search?q=${encodeURIComponent(keyword)}&form=QBLH`;
         
         const headers = {
@@ -168,8 +201,7 @@ function doCoreSearch(device, cookie, round) {
                 resolve(true);
             } else {
                 console.log(`⚠️ ${device}第${round}次搜索状态码: ${response.statusCode}`);
-                // 即使不是200也认为是成功（可能是重定向）
-                resolve(true);
+                resolve(true); // 即使不是200也继续
             }
         }).catch(error => {
             clearTimeout(searchTimeout);
@@ -195,9 +227,9 @@ function getCoreKeyword(round) {
     return prefix + topic + round;
 }
 
-function getPointsWithDetailedCheck() {
+function getPointsWithDetailedCheck(cookie) {
     return new Promise((resolve) => {
-        if (!point_cookie) {
+        if (!cookie) {
             resolve(0);
             return;
         }
@@ -205,7 +237,7 @@ function getPointsWithDetailedCheck() {
         const url = "https://rewards.bing.com/api/getuserinfo?type=1";
         const headers = {
             "accept": "application/json",
-            "cookie": point_cookie,
+            "cookie": cookie,
             "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Mobile/15E148 Safari/604.1",
             "referer": "https://rewards.bing.com/"
         };
@@ -239,7 +271,6 @@ function getPointsWithDetailedCheck() {
                     }
                     
                     if (points > 0) {
-                        $prefs.setValueForKey(points.toString(), "bing_cache_point");
                         resolve(points);
                         return;
                     }
@@ -258,9 +289,9 @@ function getPointsWithDetailedCheck() {
     });
 }
 
-function getPointsQuick() {
+function getPointsQuick(cookie) {
     return new Promise((resolve) => {
-        if (!point_cookie) {
+        if (!cookie) {
             resolve(0);
             return;
         }
@@ -268,7 +299,7 @@ function getPointsQuick() {
         const url = "https://rewards.bing.com/api/getuserinfo?type=1";
         const headers = {
             "accept": "application/json",
-            "cookie": point_cookie
+            "cookie": cookie
         };
         
         const pointsTimeout = setTimeout(() => {
@@ -309,32 +340,34 @@ function getPointsQuick() {
     });
 }
 
-function sendSmartNotification(pcResult, mobileResult) {
+function sendSmartNotification(pcResult, mobileResult, config) {
     const totalEarned = pcResult.earned + mobileResult.earned;
     const pcCount = pcResult.count || 0;
     const mobileCount = mobileResult.count || 0;
+    const totalConfigured = config.pc_times + config.mobile_times;
     
     if (totalEarned > 0) {
         $.notify(
             "Bing积分更新", 
             `获得 ${totalEarned} 积分`, 
-            `PC:${pcCount}次 移动:${mobileCount}次`
+            `PC:${pcCount}/${config.pc_times}次 移动:${mobileCount}/${config.mobile_times}次`
         );
     } else {
-        // 分析失败原因
         let reason = "未知原因";
-        let performedSearches = pcCount + mobileCount;
+        const performedSearches = pcCount + mobileCount;
         
         if (performedSearches === 0) {
-            if (pc_times <= 0 && mobile_times <= 0) {
-                reason = "搜索次数设置为0";
-            } else if (!pc_cookie && !mobile_cookie) {
-                reason = "搜索Cookie无效";
+            if (config.pc_times === 0 && config.mobile_times === 0) {
+                reason = "BoxJS中搜索次数设置为0";
+            } else if (!config.pc_cookie && !config.mobile_cookie) {
+                reason = "搜索Cookie未设置";
             } else {
-                reason = "未执行任何搜索";
+                reason = "网络问题或Cookie失效";
             }
+        } else if (performedSearches < totalConfigured) {
+            reason = `部分搜索失败 (${performedSearches}/${totalConfigured}次)`;
         } else {
-            reason = "可能已达今日上限或网络问题";
+            reason = "可能已达今日上限";
         }
         
         $.notify(
@@ -370,40 +403,58 @@ function handleCookie() {
     $done();
 }
 
-// 诊断函数 - 检查所有Cookie状态和配置
-function diagnoseCookies() {
-    console.log("🔍 开始Cookie和配置诊断");
+// 诊断函数 - 显示当前BoxJS配置状态
+function diagnoseConfig() {
+    const config = getConfig();
     
-    console.log(`📋 PC Cookie: ${pc_cookie ? `有效 (${pc_cookie.length}字符)` : '无效'}`);
-    console.log(`📋 移动Cookie: ${mobile_cookie ? `有效 (${mobile_cookie.length}字符)` : '无效'}`);
-    console.log(`📋 积分Cookie: ${point_cookie ? `有效 (${point_cookie.length}字符)` : '无效'}`);
-    console.log(`⚙️ PC搜索次数: ${pc_times}`);
-    console.log(`⚙️ 移动搜索次数: ${mobile_times}`);
-    console.log(`🌐 使用域名: ${host}`);
+    console.log("🔍 Bing积分脚本配置诊断");
+    console.log("═".repeat(50));
+    console.log(`📋 PC Cookie: ${config.pc_cookie ? `已设置 (${config.pc_cookie.length}字符)` : '未设置'}`);
+    console.log(`📋 移动Cookie: ${config.mobile_cookie ? `已设置 (${config.mobile_cookie.length}字符)` : '未设置'}`);
+    console.log(`📋 积分Cookie: ${config.point_cookie ? `已设置 (${config.point_cookie.length}字符)` : '未设置'}`);
+    console.log(`⚙️ PC搜索次数: ${config.pc_times} (BoxJS: bing_pc_times)`);
+    console.log(`⚙️ 移动搜索次数: ${config.mobile_times} (BoxJS: bing_mobile_times)`);
+    console.log(`⏱️ 搜索间隔: ${config.search_interval}秒 (BoxJS: bing_interval)`);
+    console.log(`🕒 重置时间: ${config.reset_hours}点 (BoxJS: bing_reset_hours)`);
+    console.log(`🌐 使用域名: ${config.host} (BoxJS: bing_cn = ${config.useCnDomain})`);
+    console.log("═".repeat(50));
     
-    if (point_cookie) {
-        getPointsWithDetailedCheck().then(points => {
-            console.log(`📊 当前积分: ${points}`);
-            $.notify("Bing诊断", "配置检查完成", `积分: ${points}, PC:${pc_times}次, 移动:${mobile_times}次`);
-            $done();
-        });
-    } else {
-        $.notify("Bing诊断", "配置检查完成", `PC:${pc_times}次, 移动:${mobile_times}次`);
-        $done();
+    // 执行建议
+    if (config.pc_times === 0 && config.mobile_times === 0) {
+        console.log("💡 建议: BoxJS中搜索次数都设置为0，不会执行任何搜索");
+    } else if (!config.pc_cookie && config.pc_times > 0) {
+        console.log("💡 建议: 请在BoxJS中设置bingSearchCookiePCKey");
+    } else if (!config.mobile_cookie && config.mobile_times > 0) {
+        console.log("💡 建议: 请在BoxJS中设置bingSearchCookieMobileKey");
     }
+    
+    $.notify(
+        "Bing配置诊断", 
+        `PC:${config.pc_times}次 移动:${config.mobile_times}次`, 
+        `域名:${config.host} 间隔:${config.search_interval}秒`
+    );
 }
 
 // Env类
 function Env(name) {
     this.name = name;
     this.log = console.log;
-    this.getdata = $prefs.valueForKey;
-    this.setdata = $prefs.setValueForKey;
-    this.notify = $notify;
-    this.done = $done;
+    this.getdata = (key) => $prefs.valueForKey(key);
+    this.setdata = (value, key) => $prefs.setValueForKey(value, key);
+    this.notify = (title, subtitle, message) => {
+        if ($notify) {
+            $notify(title, subtitle, message);
+        }
+    };
+    this.done = () => {
+        if ($done) {
+            $done();
+        }
+    };
 }
 
-// 如果URL包含diagnose参数，执行诊断模式
+// 诊断模式入口
 if (typeof $request === 'undefined' && typeof $argument !== 'undefined' && $argument === 'diagnose') {
-    diagnoseCookies();
+    diagnoseConfig();
+    $done();
 }
