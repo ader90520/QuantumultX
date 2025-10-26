@@ -118,7 +118,9 @@
         "bing_mobile_times",
         "bing_interval",
         "bing_reset_hours",
-        "bing_cache_point"
+        "bing_cache_point",
+        "bing_auto_skip",
+        "bing_last_success_date"
       ],
       "settings": [
         {
@@ -161,12 +163,27 @@
           "desc": "设置每天几点重置任务，24小时制"
         },
         {
+          "id": "bing_auto_skip",
+          "name": "任务完成后自动跳过",
+          "val": true,
+          "type": "boolean",
+          "desc": "开启后，当天成功获得积分后，后续执行将自动跳过"
+        },
+        {
           "id": "bing_cache_point",
           "name": "缓存积分",
           "val": 0,
           "type": "number",
           "placeholder": "0",
           "desc": "自动记录的上次积分，无需手动修改"
+        },
+        {
+          "id": "bing_last_success_date",
+          "name": "最后成功日期",
+          "val": "",
+          "type": "text",
+          "placeholder": "自动记录",
+          "desc": "自动记录最后成功获得积分的日期，用于自动跳过功能"
         },
         {
           "id": "bingPointCookieKey",
@@ -205,16 +222,32 @@
       ],
       "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js",
       "desc_html": [
-        "<h3>🏆 Bing积分智能版 v5.1</h3>",
-        "<p>智能跳过0次搜索配置，完全按照BoxJS设置执行</p>",
+        "<h3>🏆 Bing积分智能版 v5.3</h3>",
+        "<p>智能跳过0次搜索配置，完全按照BoxJS设置执行，支持任务完成后自动跳过</p>",
         
         "<h4>🔄 智能执行逻辑</h4>",
         "<ul>",
         "<li><strong>PC搜索次数为0</strong>：完全跳过PC搜索</li>",
         "<li><strong>移动搜索次数为0</strong>：完全跳过移动搜索</li>",
         "<li><strong>Cookie无效</strong>：自动跳过对应端搜索</li>",
+        "<li><strong>任务已完成</strong>：当天获得积分后自动跳过后续执行</li>",
         "<li><strong>配置检查</strong>：执行前显示当前配置状态</li>",
         "</ul>",
+        
+        "<h4>⚙️ 自动跳过功能</h4>",
+        "<div style='padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
+        "<p><strong>工作原理：</strong></p>",
+        "<ol>",
+        "<li>脚本成功获得积分后，记录当前日期</li>",
+        "<li>后续执行时检查日期，如果是同一天则自动跳过</li>",
+        "<li>第二天自动重置，重新开始执行</li>",
+        "</ol>",
+        "<p><strong>手动控制：</strong></p>",
+        "<ul>",
+        "<li>开启/关闭：通过「任务完成后自动跳过」开关控制</li>",
+        "<li>强制重置：删除「最后成功日期」的值</li>",
+        "</ul>",
+        "</div>",
         
         "<h4>⚙️ 配置示例</h4>",
         "<div style='padding: 10px; background: #e9ecef; border-radius: 5px;'>",
@@ -236,11 +269,12 @@
         "</div>",
         
         "<h4>📊 执行日志示例</h4>",
-        "<pre>🚀 开始执行智能版搜索\n📊 配置: PC2次, 移动0次\n⏭️ 移动搜索次数为0，跳过移动搜索\n✅ PC搜索获得积分: 6 (2次成功)\n✅ 脚本执行完成</pre>",
+        "<pre>🚀 开始执行智能版搜索 v5.3\n📊 配置: PC2次, 移动0次\n🔧 自动跳过: 开启\n⏭️ 移动搜索次数为0，跳过移动搜索\n✅ PC搜索获得积分: 6 (2次成功)\n📅 记录今日 Mon Dec 04 2023 任务完成，下次将自动跳过\n✅ 脚本执行完成</pre>",
         
-        "<div style='padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; margin-top: 15px;'>",
+        "<div style='padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; margin-top: 15px;'>",
         "<p><strong>🎯 使用场景</strong></p>",
         "<ul>",
+        "<li><strong>定时任务优化</strong>：配置每2分钟执行，但每天只真正执行一次</li>",
         "<li><strong>网络不稳定</strong>：只配置一端搜索减少超时风险</li>",
         "<li><strong>Cookie问题</strong>：暂时禁用问题端的搜索</li>",
         "<li><strong>积分上限</strong>：某端已达上限时禁用该端</li>",
