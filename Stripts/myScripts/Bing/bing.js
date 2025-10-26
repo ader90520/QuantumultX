@@ -1,460 +1,183 @@
-/*
-🏆 Bing积分智能版 v5.2 (修复BoxJS配置同步问题)
-完全支持BoxJS参数配置，智能跳过0次搜索
-*/
-
-const $ = new Env("Bing积分");
-
-// 配置读取 - 修复键名和默认值问题
-const getConfig = () => {
-    // 读取BoxJS配置，正确处理默认值
-    const pc_cookie = $prefs.valueForKey("bingSearchCookiePCKey");
-    const mobile_cookie = $prefs.valueForKey("bingSearchCookieMobileKey");
-    const point_cookie = $prefs.valueForKey("bingPointCookieKey");
-    
-    // 修复配置读取：正确处理布尔值和数字
-    const useCnDomain = $prefs.valueForKey("bing_cn") === "true";
-    const pc_times = parseInt($prefs.valueForKey("bing_pc_times")) || 0; // 默认改为0
-    const mobile_times = parseInt($prefs.valueForKey("bing_mobile_times")) || 0; // 默认改为0
-    const search_interval = parseInt($prefs.valueForKey("bing_interval")) || 5;
-    const reset_hours = parseInt($prefs.valueForKey("bing_reset_hours")) || 8;
-    
-    const host = useCnDomain ? "cn.bing.com" : "www.bing.com";
-    
-    return {
-        pc_cookie,
-        mobile_cookie,
-        point_cookie,
-        pc_times,
-        mobile_times,
-        search_interval,
-        reset_hours,
-        host,
-        useCnDomain
-    };
-};
-
-// 主执行
-if (typeof $request !== 'undefined') {
-    handleCookie();
-} else {
-    executeSmartSearch();
-}
-
-function executeSmartSearch() {
-    const config = getConfig();
-    
-    console.log("🚀 开始执行智能版搜索 v5.2");
-    console.log(`📊 BoxJS配置: PC${config.pc_times}次, 移动${config.mobile_times}次`);
-    console.log(`⚙️ 搜索间隔: ${config.search_interval}秒, 重置时间: ${config.reset_hours}点`);
-    
-    // 配置验证日志
-    if (config.pc_times === 0) console.log("⏭️ PC搜索次数为0，将跳过PC搜索");
-    if (config.mobile_times === 0) console.log("⏭️ 移动搜索次数为0，将跳过移动搜索");
-    if (!config.pc_cookie && config.pc_times > 0) console.log("❌ PC Cookie未设置，但PC搜索次数>0");
-    if (!config.mobile_cookie && config.mobile_times > 0) console.log("❌ 移动Cookie未设置，但移动搜索次数>0");
-    
-    // 设置45秒强制超时
-    const timeoutId = setTimeout(() => {
-        console.log("⏰ 脚本强制结束");
-        $done();
-    }, 45000);
-    
-    performSmartSearch(config).finally(() => {
-        clearTimeout(timeoutId);
-        console.log("✅ 脚本执行完成");
-        $done();
-    });
-}
-
-async function performSmartSearch(config) {
-    try {
-        // 1. 首先验证积分Cookie是否有效
-        if (config.point_cookie) {
-            const points = await getPointsWithDetailedCheck(config.point_cookie);
-            if (points === 0) {
-                console.log("❌ 积分Cookie无效，请重新获取");
-                $.notify("Bing积分", "Cookie无效", "请重新获取积分Cookie");
-                return;
-            }
-            console.log(`📊 当前积分: ${points}`);
-            // 更新缓存积分
-            $prefs.setValueForKey(points.toString(), "bing_cache_point");
-        } else {
-            console.log("⚠️ 未设置积分Cookie，无法跟踪积分");
-        }
-        
-        // 2. 执行PC搜索（严格根据BoxJS配置）
-        let pcResult = { success: false, earned: 0, count: 0 };
-        if (config.pc_cookie && config.pc_times > 0) {
-            pcResult = await performSingleSearchWithValidation('pc', config.pc_cookie, config.pc_times, config);
-            console.log(`💻 PC搜索完成: ${pcResult.count}/${config.pc_times}次成功`);
-        } else if (config.pc_times <= 0) {
-            console.log("⏭️ PC搜索次数为0，已跳过PC搜索");
-        } else {
-            console.log("❌ PC Cookie无效，跳过PC搜索");
-        }
-        
-        // 3. 执行移动搜索（严格根据BoxJS配置）
-        let mobileResult = { success: false, earned: 0, count: 0 };
-        if (config.mobile_cookie && config.mobile_times > 0) {
-            mobileResult = await performSingleSearchWithValidation('mobile', config.mobile_cookie, config.mobile_times, config);
-            console.log(`📱 移动搜索完成: ${mobileResult.count}/${config.mobile_times}次成功`);
-        } else if (config.mobile_times <= 0) {
-            console.log("⏭️ 移动搜索次数为0，已跳过移动搜索");
-        } else {
-            console.log("❌ 移动Cookie无效，跳过移动搜索");
-        }
-        
-        // 4. 发送最终通知
-        sendSmartNotification(pcResult, mobileResult, config);
-        
-    } catch (error) {
-        console.log(`⚠️ 执行异常: ${error}`);
-        $.notify("Bing积分错误", "执行异常", error.message);
+{
+  "id": "bing_complete",
+  "name": "Bing积分智能版",
+  "author": "@ader90520",
+  "repo": "https://github.com/ader90520/QuantumultX",
+  "icons": [
+    "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bing.png",
+    "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bing.png"
+  ],
+  "keys": [
+    "bingPointCookieKey",
+    "bingSearchCookiePCKey",
+    "bingSearchCookieMobileKey",
+    "bing_cn",
+    "bing_pc_times",
+    "bing_mobile_times",
+    "bing_interval",
+    "bing_reset_hours",
+    "bing_cache_point",
+    "bing_auto_skip",
+    "bing_last_success_date"
+  ],
+  "settings": [
+    {
+      "id": "bing_cn",
+      "name": "使用国区域名",
+      "val": true,
+      "type": "boolean",
+      "desc": "开启使用cn.bing.com，关闭使用www.bing.com"
+    },
+    {
+      "id": "bing_pc_times",
+      "name": "PC端搜索次数",
+      "val": 0,
+      "type": "number",
+      "placeholder": "0",
+      "desc": "PC端每次执行搜索次数，设置为0则跳过PC搜索"
+    },
+    {
+      "id": "bing_mobile_times",
+      "name": "移动端搜索次数",
+      "val": 0,
+      "type": "number",
+      "placeholder": "0", 
+      "desc": "移动端每次执行搜索次数，设置为0则跳过移动搜索"
+    },
+    {
+      "id": "bing_interval",
+      "name": "搜索间隔(秒)",
+      "val": 5,
+      "type": "number",
+      "placeholder": "5",
+      "desc": "每次搜索之间的间隔时间，避免过快请求"
+    },
+    {
+      "id": "bing_reset_hours",
+      "name": "每日重置时间(小时)",
+      "val": 8,
+      "type": "number",
+      "placeholder": "8",
+      "desc": "设置每天几点重置任务，24小时制"
+    },
+    {
+      "id": "bing_auto_skip",
+      "name": "任务完成后自动跳过",
+      "val": true,
+      "type": "boolean",
+      "desc": "开启后，当天成功获得积分后，后续执行将自动跳过"
+    },
+    {
+      "id": "bing_cache_point",
+      "name": "缓存积分",
+      "val": 0,
+      "type": "number",
+      "placeholder": "0",
+      "desc": "自动记录的上次积分，无需手动修改"
+    },
+    {
+      "id": "bing_last_success_date",
+      "name": "最后成功日期",
+      "val": "",
+      "type": "text",
+      "placeholder": "自动记录",
+      "desc": "自动记录最后成功获得积分的日期，用于自动跳过功能"
+    },
+    {
+      "id": "bingPointCookieKey",
+      "name": "积分面板Cookie",
+      "val": "",
+      "type": "textarea",
+      "autoGrow": true,
+      "placeholder": "自动获取 - 访问rewards.bing.com",
+      "desc": "用于获取积分任务列表和执行积分任务"
+    },
+    {
+      "id": "bingSearchCookiePCKey",
+      "name": "PC端搜索Cookie",
+      "val": "",
+      "type": "textarea",
+      "autoGrow": true,
+      "placeholder": "自动获取 - 在PC浏览器访问Bing搜索",
+      "desc": "用于PC端搜索任务，请使用PC浏览器获取"
+    },
+    {
+      "id": "bingSearchCookieMobileKey",
+      "name": "移动端搜索Cookie",
+      "val": "",
+      "type": "textarea",
+      "autoGrow": true,
+      "placeholder": "自动获取 - 在移动浏览器访问Bing搜索",
+      "desc": "用于移动端搜索任务，请使用移动浏览器获取"
+    },
+    {
+      "id": "@bing.diagnose",
+      "name": "运行诊断模式",
+      "val": false,
+      "type": "boolean",
+      "desc": "开启后下次执行将运行Cookie诊断，检查所有Cookie状态和配置"
     }
-}
-
-async function performSingleSearchWithValidation(device, cookie, times, config) {
-    console.log(`${device === 'pc' ? '💻' : '📱'} 开始执行${device}搜索 (目标:${times}次)...`);
+  ],
+  "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js",
+  "desc_html": [
+    "<h3>🏆 Bing积分智能版 v5.3</h3>",
+    "<p>智能跳过0次搜索配置，完全按照BoxJS设置执行，支持任务完成后自动跳过</p>",
     
-    const result = { success: false, earned: 0, count: 0 };
+    "<h4>🔄 智能执行逻辑</h4>",
+    "<ul>",
+    "<li><strong>PC搜索次数为0</strong>：完全跳过PC搜索</li>",
+    "<li><strong>移动搜索次数为0</strong>：完全跳过移动搜索</li>",
+    "<li><strong>Cookie无效</strong>：自动跳过对应端搜索</li>",
+    "<li><strong>任务已完成</strong>：当天获得积分后自动跳过后续执行</li>",
+    "<li><strong>配置检查</strong>：执行前显示当前配置状态</li>",
+    "</ul>",
     
-    try {
-        // 获取搜索前积分
-        const beforePoints = config.point_cookie ? await getPointsQuick(config.point_cookie) : 0;
-        
-        // 执行指定次数的搜索
-        let successCount = 0;
-        for (let i = 1; i <= times; i++) {
-            const searchSuccess = await doCoreSearch(device, cookie, i, config.host);
-            if (searchSuccess) {
-                successCount++;
-                result.count = successCount;
-                
-                // 使用BoxJS配置的搜索间隔
-                if (i < times) {
-                    const interval = config.search_interval * 1000; // 转换为毫秒
-                    console.log(`⏳ 等待${config.search_interval}秒后进行下一次搜索...`);
-                    await delay(interval);
-                }
-            }
-        }
-        
-        result.success = successCount > 0;
-        
-        if (result.success && config.point_cookie) {
-            // 等待足够时间让积分更新
-            await delay(5000);
-            
-            // 获取搜索后积分
-            const afterPoints = await getPointsQuick(config.point_cookie);
-            
-            if (afterPoints > beforePoints) {
-                result.earned = afterPoints - beforePoints;
-                console.log(`✅ ${device}搜索获得积分: ${result.earned} (${successCount}次成功)`);
-            } else {
-                console.log(`⚠️ ${device}搜索未获得积分 (${successCount}次成功)`);
-            }
-        }
-        
-    } catch (error) {
-        console.log(`❌ ${device}搜索验证异常: ${error}`);
-    }
+    "<h4>⚙️ 自动跳过功能</h4>",
+    "<div style='padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
+    "<p><strong>工作原理：</strong></p>",
+    "<ol>",
+    "<li>脚本成功获得积分后，记录当前日期</li>",
+    "<li>后续执行时检查日期，如果是同一天则自动跳过</li>",
+    "<li>第二天自动重置，重新开始执行</li>",
+    "</ol>",
+    "<p><strong>手动控制：</strong></p>",
+    "<ul>",
+    "<li>开启/关闭：通过「任务完成后自动跳过」开关控制</li>",
+    "<li>强制重置：删除「最后成功日期」的值</li>",
+    "</ul>",
+    "</div>",
     
-    return result;
-}
-
-function doCoreSearch(device, cookie, round, host) {
-    return new Promise((resolve) => {
-        const keyword = getCoreKeyword(round);
-        const searchUrl = `https://${host}/search?q=${encodeURIComponent(keyword)}&form=QBLH`;
-        
-        const headers = {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "User-Agent": device === 'pc' 
-                ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0"
-                : "Mozilla/5.0 (iPhone; CPU iPhone OS 16_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Mobile/15E148 Safari/604.1",
-            "Referer": `https://${host}/`,
-            "Cookie": cookie
-        };
-        
-        const searchTimeout = setTimeout(() => {
-            console.log(`⏰ ${device}第${round}次搜索超时`);
-            resolve(false);
-        }, 10000);
-        
-        console.log(`🔍 ${device}第${round}次搜索: ${keyword}`);
-        
-        $task.fetch({
-            url: searchUrl,
-            headers: headers,
-            timeout: 10000
-        }).then(response => {
-            clearTimeout(searchTimeout);
-            
-            if (response.statusCode === 200) {
-                console.log(`✅ ${device}第${round}次搜索成功`);
-                resolve(true);
-            } else {
-                console.log(`⚠️ ${device}第${round}次搜索状态码: ${response.statusCode}`);
-                resolve(true); // 即使不是200也继续
-            }
-        }).catch(error => {
-            clearTimeout(searchTimeout);
-            console.log(`❌ ${device}第${round}次搜索错误: ${error}`);
-            resolve(false);
-        });
-    });
-}
-
-function getCoreKeyword(round) {
-    // 使用更真实的中文搜索词
-    const topics = [
-        "天气预报", "新闻资讯", "健康养生", "旅游攻略", "美食制作",
-        "电影推荐", "音乐欣赏", "体育赛事", "科技动态", "财经新闻",
-        "教育学习", "职场技能", "汽车资讯", "房产信息", "时尚潮流"
-    ];
+    "<h4>⚙️ 配置示例</h4>",
+    "<div style='padding: 10px; background: #e9ecef; border-radius: 5px;'>",
+    "<p><strong>仅PC搜索：</strong></p>",
+    "<ul>",
+    "<li>PC搜索次数：2</li>",
+    "<li>移动搜索次数：0</li>",
+    "</ul>",
+    "<p><strong>仅移动搜索：</strong></p>",
+    "<ul>",
+    "<li>PC搜索次数：0</li>",
+    "<li>移动搜索次数：2</li>",
+    "</ul>",
+    "<p><strong>两者都执行：</strong></p>",
+    "<ul>",
+    "<li>PC搜索次数：2</li>",
+    "<li>移动搜索次数：2</li>",
+    "</ul>",
+    "</div>",
     
-    const prefixes = ["今日", "最新", "如何", "什么是", "学习", "了解"];
+    "<h4>📊 执行日志示例</h4>",
+    "<pre>🚀 开始执行智能版搜索 v5.3\n📊 配置: PC2次, 移动0次\n🔧 自动跳过: 开启\n⏭️ 移动搜索次数为0，跳过移动搜索\n✅ PC搜索获得积分: 6 (2次成功)\n📅 记录今日 Mon Dec 04 2023 任务完成，下次将自动跳过\n✅ 脚本执行完成</pre>",
     
-    const topic = topics[Math.floor(Math.random() * topics.length)];
-    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-    
-    return prefix + topic + round;
-}
-
-function getPointsWithDetailedCheck(cookie) {
-    return new Promise((resolve) => {
-        if (!cookie) {
-            resolve(0);
-            return;
-        }
-        
-        const url = "https://rewards.bing.com/api/getuserinfo?type=1";
-        const headers = {
-            "accept": "application/json",
-            "cookie": cookie,
-            "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Mobile/15E148 Safari/604.1",
-            "referer": "https://rewards.bing.com/"
-        };
-        
-        const pointsTimeout = setTimeout(() => {
-            console.log("⏰ 积分查询超时");
-            resolve(0);
-        }, 10000);
-        
-        $task.fetch({
-            url: url,
-            headers: headers,
-            timeout: 10000
-        }).then(response => {
-            clearTimeout(pointsTimeout);
-            
-            if (response.statusCode === 200 && response.body) {
-                try {
-                    const data = JSON.parse(response.body);
-                    console.log("📋 积分API响应: 成功");
-                    
-                    let points = 0;
-                    
-                    // 多种方式尝试获取积分
-                    if (data.userStatus && data.userStatus.availablePoints !== undefined) {
-                        points = data.userStatus.availablePoints;
-                    } else if (data.dashboard && data.dashboard.userStatus && data.dashboard.userStatus.availablePoints !== undefined) {
-                        points = data.dashboard.userStatus.availablePoints;
-                    } else if (data.availablePoints !== undefined) {
-                        points = data.availablePoints;
-                    }
-                    
-                    if (points > 0) {
-                        resolve(points);
-                        return;
-                    }
-                } catch (e) {
-                    console.log("❌ 积分数据解析失败:", e.message);
-                }
-            } else {
-                console.log(`❌ 积分查询失败，状态码: ${response.statusCode}`);
-            }
-            resolve(0);
-        }).catch(error => {
-            clearTimeout(pointsTimeout);
-            console.log("❌ 积分查询错误:", error);
-            resolve(0);
-        });
-    });
-}
-
-function getPointsQuick(cookie) {
-    return new Promise((resolve) => {
-        if (!cookie) {
-            resolve(0);
-            return;
-        }
-        
-        const url = "https://rewards.bing.com/api/getuserinfo?type=1";
-        const headers = {
-            "accept": "application/json",
-            "cookie": cookie
-        };
-        
-        const pointsTimeout = setTimeout(() => {
-            resolve(0);
-        }, 8000);
-        
-        $task.fetch({
-            url: url,
-            headers: headers,
-            timeout: 8000
-        }).then(response => {
-            clearTimeout(pointsTimeout);
-            
-            if (response.statusCode === 200 && response.body) {
-                try {
-                    const data = JSON.parse(response.body);
-                    let points = 0;
-                    
-                    if (data.userStatus && data.userStatus.availablePoints !== undefined) {
-                        points = data.userStatus.availablePoints;
-                    } else if (data.dashboard && data.dashboard.userStatus && data.dashboard.userStatus.availablePoints !== undefined) {
-                        points = data.dashboard.userStatus.availablePoints;
-                    }
-                    
-                    if (points > 0) {
-                        resolve(points);
-                        return;
-                    }
-                } catch (e) {
-                    // 静默失败
-                }
-            }
-            resolve(0);
-        }).catch(() => {
-            clearTimeout(pointsTimeout);
-            resolve(0);
-        });
-    });
-}
-
-function sendSmartNotification(pcResult, mobileResult, config) {
-    const totalEarned = pcResult.earned + mobileResult.earned;
-    const pcCount = pcResult.count || 0;
-    const mobileCount = mobileResult.count || 0;
-    const totalConfigured = config.pc_times + config.mobile_times;
-    
-    if (totalEarned > 0) {
-        $.notify(
-            "Bing积分更新", 
-            `获得 ${totalEarned} 积分`, 
-            `PC:${pcCount}/${config.pc_times}次 移动:${mobileCount}/${config.mobile_times}次`
-        );
-    } else {
-        let reason = "未知原因";
-        const performedSearches = pcCount + mobileCount;
-        
-        if (performedSearches === 0) {
-            if (config.pc_times === 0 && config.mobile_times === 0) {
-                reason = "BoxJS中搜索次数设置为0";
-            } else if (!config.pc_cookie && !config.mobile_cookie) {
-                reason = "搜索Cookie未设置";
-            } else {
-                reason = "网络问题或Cookie失效";
-            }
-        } else if (performedSearches < totalConfigured) {
-            reason = `部分搜索失败 (${performedSearches}/${totalConfigured}次)`;
-        } else {
-            reason = "可能已达今日上限";
-        }
-        
-        $.notify(
-            "Bing积分", 
-            `搜索完成 (${performedSearches}次)`, 
-            `未获得积分 - ${reason}`
-        );
-    }
-}
-
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function handleCookie() {
-    if ($request && /rewards\.bing\.com/.test($request.url)) {
-        console.log("🍪 获取Cookie");
-        let cookie = $request.headers?.Cookie || $request.headers?.cookie;
-        if (cookie) {
-            const important = ['_EDGE_S', '_EDGE_V', 'MUID', 'MUIDB', '_RwBf', '_SS', 'KievRPSAuth', 'RPSAuth'];
-            const cleaned = cookie.split(';')
-                .map(part => part.trim())
-                .filter(part => {
-                    const key = part.split('=')[0];
-                    return important.some(importantKey => key.startsWith(importantKey));
-                })
-                .join('; ');
-            
-            $prefs.setValueForKey(cleaned, "bingPointCookieKey");
-            console.log("✅ Cookie保存成功");
-        }
-    }
-    $done();
-}
-
-// 诊断函数 - 显示当前BoxJS配置状态
-function diagnoseConfig() {
-    const config = getConfig();
-    
-    console.log("🔍 Bing积分脚本配置诊断");
-    console.log("═".repeat(50));
-    console.log(`📋 PC Cookie: ${config.pc_cookie ? `已设置 (${config.pc_cookie.length}字符)` : '未设置'}`);
-    console.log(`📋 移动Cookie: ${config.mobile_cookie ? `已设置 (${config.mobile_cookie.length}字符)` : '未设置'}`);
-    console.log(`📋 积分Cookie: ${config.point_cookie ? `已设置 (${config.point_cookie.length}字符)` : '未设置'}`);
-    console.log(`⚙️ PC搜索次数: ${config.pc_times} (BoxJS: bing_pc_times)`);
-    console.log(`⚙️ 移动搜索次数: ${config.mobile_times} (BoxJS: bing_mobile_times)`);
-    console.log(`⏱️ 搜索间隔: ${config.search_interval}秒 (BoxJS: bing_interval)`);
-    console.log(`🕒 重置时间: ${config.reset_hours}点 (BoxJS: bing_reset_hours)`);
-    console.log(`🌐 使用域名: ${config.host} (BoxJS: bing_cn = ${config.useCnDomain})`);
-    console.log("═".repeat(50));
-    
-    // 执行建议
-    if (config.pc_times === 0 && config.mobile_times === 0) {
-        console.log("💡 建议: BoxJS中搜索次数都设置为0，不会执行任何搜索");
-    } else if (!config.pc_cookie && config.pc_times > 0) {
-        console.log("💡 建议: 请在BoxJS中设置bingSearchCookiePCKey");
-    } else if (!config.mobile_cookie && config.mobile_times > 0) {
-        console.log("💡 建议: 请在BoxJS中设置bingSearchCookieMobileKey");
-    }
-    
-    $.notify(
-        "Bing配置诊断", 
-        `PC:${config.pc_times}次 移动:${config.mobile_times}次`, 
-        `域名:${config.host} 间隔:${config.search_interval}秒`
-    );
-}
-
-// Env类
-function Env(name) {
-    this.name = name;
-    this.log = console.log;
-    this.getdata = (key) => $prefs.valueForKey(key);
-    this.setdata = (value, key) => $prefs.setValueForKey(value, key);
-    this.notify = (title, subtitle, message) => {
-        if ($notify) {
-            $notify(title, subtitle, message);
-        }
-    };
-    this.done = () => {
-        if ($done) {
-            $done();
-        }
-    };
-}
-
-// 诊断模式入口
-if (typeof $request === 'undefined' && typeof $argument !== 'undefined' && $argument === 'diagnose') {
-    diagnoseConfig();
-    $done();
+    "<div style='padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; margin-top: 15px;'>",
+    "<p><strong>🎯 使用场景</strong></p>",
+    "<ul>",
+    "<li><strong>定时任务优化</strong>：配置每2分钟执行，但每天只真正执行一次</li>",
+    "<li><strong>网络不稳定</strong>：只配置一端搜索减少超时风险</li>",
+    "<li><strong>Cookie问题</strong>：暂时禁用问题端的搜索</li>",
+    "<li><strong>积分上限</strong>：某端已达上限时禁用该端</li>",
+    "<li><strong>测试目的</strong>：单独测试PC或移动端搜索效果</li>",
+    "</ul>",
+    "</div>"
+  ]
 }
