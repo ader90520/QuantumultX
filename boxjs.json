@@ -18,7 +18,10 @@
       "keys": [
         "fuba_cookie",
         "fuba_username",
-        "fuba_domain"
+        "fuba_domain",
+        "fuba_last_sign_date",
+        "fuba_continuous_days",
+        "fuba_total_days"
       ],
       "settings": [
         {
@@ -38,6 +41,10 @@
             {
               "name": "wnflb99.com",
               "val": "www.wnflb99.com"
+            },
+            {
+              "name": "wnflb77.com",
+              "val": "www.wnflb77.com"
             }
           ],
           "desc": "选择福利吧访问域名，如果某个域名无法访问，请尝试其他域名"
@@ -60,11 +67,42 @@
           "desc": "已配置自动获取，无需手动填写"
         },
         {
+          "id": "fuba_last_sign_date",
+          "name": "最后签到日期",
+          "val": "",
+          "type": "text", 
+          "placeholder": "自动记录",
+          "desc": "自动记录最后成功签到的日期"
+        },
+        {
+          "id": "fuba_continuous_days",
+          "name": "连续签到天数",
+          "val": "0",
+          "type": "number",
+          "placeholder": "0",
+          "desc": "自动记录连续签到天数"
+        },
+        {
+          "id": "fuba_total_days",
+          "name": "总签到天数", 
+          "val": "0",
+          "type": "number",
+          "placeholder": "0",
+          "desc": "自动记录总签到天数"
+        },
+        {
           "id": "@fuba.auto_get",
           "name": "自动获取状态",
           "val": false,
           "type": "boolean",
           "desc": "显示Cookie和用户名是否已通过重写规则自动获取"
+        },
+        {
+          "id": "@fuba.debug_mode",
+          "name": "调试模式",
+          "val": false,
+          "type": "boolean",
+          "desc": "开启后显示详细日志，用于排查问题"
         }
       ],
       "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/fuba/fuba.js",
@@ -125,61 +163,66 @@
         "bing_cache_point",
         "bing_auto_skip",
         "bing_last_success_date",
-        "bing_last_reset_date"
+        "bing_last_reset_date",
+        "bing_safe_mode",
+        "bing_max_daily",
+        "bing_daily_count",
+        "bing_account_status",
+        "bing_last_check_date"
       ],
       "settings": [
         {
           "id": "bing_cn",
           "name": "使用国区域名",
-          "val": true,
-          "type": "boolean",
-          "desc": "开启使用cn.bing.com，关闭使用www.bing.com"
+          "val": false,
+          "type": "boolean", 
+          "desc": "开启使用cn.bing.com，关闭使用www.bing.com。国际版更稳定，建议关闭"
         },
         {
           "id": "bing_pc_times",
           "name": "每次PC搜索次数",
-          "val": 3,
+          "val": 2,
           "type": "number",
-          "placeholder": "3",
-          "desc": "每次执行时PC端搜索次数，建议3-5次避免被限制"
+          "placeholder": "2",
+          "desc": "每次执行时PC端搜索次数，受限制账户建议1-2次"
         },
         {
-          "id": "bing_mobile_times",
+          "id": "bing_mobile_times", 
           "name": "每次移动搜索次数",
-          "val": 3,
+          "val": 2,
           "type": "number",
-          "placeholder": "3", 
-          "desc": "每次执行时移动端搜索次数，建议3-5次避免被限制"
+          "placeholder": "2",
+          "desc": "每次执行时移动端搜索次数，受限制账户建议1-2次"
         },
         {
           "id": "bing_pc_goal",
-          "name": "每日PC目标次数",
-          "val": 30,
+          "name": "每日PC目标次数", 
+          "val": 15,
           "type": "number",
-          "placeholder": "30",
-          "desc": "PC端每日总目标搜索次数，用于进度跟踪"
+          "placeholder": "15",
+          "desc": "PC端每日总目标搜索次数，受限制账户建议降低目标"
         },
         {
-          "id": "bing_mobile_goal", 
+          "id": "bing_mobile_goal",
           "name": "每日移动目标次数",
-          "val": 20,
-          "type": "number",
-          "placeholder": "20",
-          "desc": "移动端每日总目标搜索次数，用于进度跟踪"
+          "val": 12,
+          "type": "number", 
+          "placeholder": "12",
+          "desc": "移动端每日总目标搜索次数，受限制账户建议降低目标"
         },
         {
           "id": "bing_interval",
-          "name": "搜索间隔(秒)",
-          "val": 5,
+          "name": "搜索间隔(秒)", 
+          "val": 30,
           "type": "number",
-          "placeholder": "5",
-          "desc": "每次搜索之间的间隔时间，避免过快请求"
+          "placeholder": "30",
+          "desc": "每次搜索之间的间隔时间，受限制账户建议30秒以上"
         },
         {
           "id": "bing_reset_hours",
           "name": "每日重置时间(小时)",
           "val": 8,
-          "type": "number",
+          "type": "number", 
           "placeholder": "8",
           "desc": "设置每天几点重置任务，24小时制"
         },
@@ -191,8 +234,47 @@
           "desc": "开启后，当天成功获得积分后，后续执行将自动跳过"
         },
         {
+          "id": "bing_safe_mode",
+          "name": "安全模式",
+          "val": true,
+          "type": "boolean", 
+          "desc": "开启后脚本会检查账户状态，受限制时自动跳过搜索"
+        },
+        {
+          "id": "bing_max_daily", 
+          "name": "每日最大搜索次数",
+          "val": 8,
+          "type": "number",
+          "placeholder": "8",
+          "desc": "每日最多执行搜索次数，防止过度使用"
+        },
+        {
+          "id": "bing_daily_count",
+          "name": "今日已搜索次数", 
+          "val": 0,
+          "type": "number",
+          "placeholder": "0",
+          "desc": "自动记录今日已执行搜索次数，无需手动修改"
+        },
+        {
+          "id": "bing_account_status", 
+          "name": "账户状态",
+          "val": "UNKNOWN",
+          "type": "text",
+          "placeholder": "自动检测",
+          "desc": "自动记录账户状态：NORMAL-正常, RESTRICTED-受限制, UNKNOWN-未知"
+        },
+        {
+          "id": "bing_last_check_date",
+          "name": "最后检查日期",
+          "val": "",
+          "type": "text", 
+          "placeholder": "自动记录",
+          "desc": "自动记录最后检查账户状态的日期"
+        },
+        {
           "id": "bing_cache_point",
-          "name": "缓存积分",
+          "name": "缓存积分", 
           "val": 0,
           "type": "number",
           "placeholder": "0",
@@ -202,8 +284,8 @@
           "id": "bing_pc_progress",
           "name": "PC今日进度",
           "val": 0,
-          "type": "number", 
-          "placeholder": "0",
+          "type": "number",
+          "placeholder": "0", 
           "desc": "自动记录PC端今日已完成次数，无需手动修改"
         },
         {
@@ -211,8 +293,8 @@
           "name": "移动今日进度",
           "val": 0,
           "type": "number",
-          "placeholder": "0", 
-          "desc": "自动记录移动端今日已完成次数，无需手动修改"
+          "placeholder": "0",
+          "desc": "自动记录移动端今日已完成次数，无需手动修改" 
         },
         {
           "id": "bing_last_success_date",
@@ -226,7 +308,7 @@
           "id": "bing_last_reset_date",
           "name": "最后重置日期",
           "val": "",
-          "type": "text",
+          "type": "text", 
           "placeholder": "自动记录",
           "desc": "自动记录最后重置进度日期，用于每日重置功能"
         },
@@ -236,7 +318,7 @@
           "val": "",
           "type": "textarea",
           "autoGrow": true,
-          "placeholder": "自动获取 - 访问rewards.bing.com",
+          "placeholder": "自动获取 - 访问rewards.bing.com", 
           "desc": "用于获取积分任务列表和执行积分任务"
         },
         {
@@ -249,87 +331,119 @@
           "desc": "用于PC端搜索任务，请使用PC浏览器获取"
         },
         {
-          "id": "bingSearchCookieMobileKey",
+          "id": "bingSearchCookieMobileKey", 
           "name": "移动端搜索Cookie",
           "val": "",
-          "type": "textarea",
+          "type": "textarea", 
           "autoGrow": true,
           "placeholder": "自动获取 - 在移动浏览器访问Bing搜索",
           "desc": "用于移动端搜索任务，请使用移动浏览器获取"
         },
         {
           "id": "@bing.diagnose",
-          "name": "运行诊断模式",
+          "name": "运行诊断模式", 
           "val": false,
           "type": "boolean",
           "desc": "开启后下次执行将运行Cookie诊断，检查所有Cookie状态和配置"
         },
         {
           "id": "@bing.reset_progress",
-          "name": "手动重置进度",
+          "name": "手动重置进度", 
           "val": false,
           "type": "boolean",
           "desc": "开启后将立即重置今日进度（下次执行时生效）"
+        },
+        {
+          "id": "@bing.reset_restriction", 
+          "name": "重置限制状态",
+          "val": false,
+          "type": "boolean",
+          "desc": "开启后将清除账户限制状态记录（用于手动恢复后）"
         }
       ],
       "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js",
       "desc_html": [
-        "<h3>🏆 Bing积分智能版 v5.5</h3>",
-        "<p>智能进度跟踪，每次少量搜索避免限制，显示完整每日进度</p>",
-        "<p style='color: #28a745;'><strong>新增：每日进度跟踪功能，每次执行少量搜索但显示完整进度</strong></p>",
+        "<h3>🏆 Bing积分安全智能版 v6.0</h3>",
+        "<p>智能账户状态监控 + 安全搜索策略，避免账户限制</p>",
+        "<p style='color: #28a745;'><strong>新增：安全模式，自动检测账户限制状态，受限制时跳过搜索</strong></p>",
         
-        "<h4>🔄 智能执行逻辑</h4>",
+        "<h4>🛡️ 安全保护机制</h4>",
         "<ul>",
-        "<li><strong>分批次执行</strong>：每次只执行3-5次搜索，避免被Bing限制</li>",
-        "<li><strong>进度跟踪</strong>：自动记录每日总进度，即使分多次执行</li>",
-        "<li><strong>智能计算</strong>：自动计算剩余积分和完成状态</li>",
-        "<li><strong>自动重置</strong>：每天在指定时间自动重置进度</li>",
+        "<li><strong>状态监控</strong>：每次执行前检查账户限制状态</li>",
+        "<li><strong>智能跳过</strong>：检测到限制时自动跳过搜索，仅发送状态通知</li>",
+        "<li><strong>频率控制</strong>：限制每日最大搜索次数，防止过度使用</li>",
+        "<li><strong>保守策略</strong>：降低单次搜索次数，增加间隔时间</li>",
         "</ul>",
         
-        "<h4>📊 通知显示格式</h4>",
-        "<div style='padding: 10px; background: #e9ecef; border-radius: 5px;'>",
-        "<p><strong>获得积分时：</strong></p>",
-        "<pre>获得 12 积分\n前次积分: 1000\n本次获得: +12积分\n当前总积分: 1012\nPC: 2/30次\n移动: 2/20次\n剩余积分: 138 (150-12)</pre>",
-        "<p><strong>未获得积分时：</strong></p>",
-        "<pre>搜索完成 (0次)\n未获得积分 - BoxJS中搜索次数设置为0\n当前总积分: 7031\nPC: 0/30次\n移动: 0/20次\n剩余积分: 150 (150-0)\n✅ 今日任务未开始</pre>",
-        "</div>",
-        
-        "<h4>⚙️ 推荐配置</h4>",
+        "<h4>📊 推荐安全配置</h4>",
         "<div style='padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
-        "<p><strong>标准配置（推荐）：</strong></p>",
+        "<p><strong>受限制账户配置：</strong></p>",
         "<ul>",
-        "<li><strong>每次PC搜索次数</strong>：3次</li>",
-        "<li><strong>每次移动搜索次数</strong>：3次</li>",
-        "<li><strong>每日PC目标次数</strong>：30次</li>",
-        "<li><strong>每日移动目标次数</strong>：20次</li>",
-        "<li><strong>搜索间隔</strong>：5秒</li>",
-        "<li><strong>定时任务</strong>：每2分钟执行一次</li>",
+        "<li><strong>每次PC搜索次数</strong>：1-2次</li>",
+        "<li><strong>每次移动搜索次数</strong>：1-2次</li>",
+        "<li><strong>每日PC目标次数</strong>：10-15次</li>",
+        "<li><strong>每日移动目标次数</strong>：8-12次</li>",
+        "<li><strong>搜索间隔</strong>：30秒以上</li>",
+        "<li><strong>安全模式</strong>：必须开启</li>",
         "</ul>",
-        "<p><strong>效果</strong>：每次执行获得约18积分，约10次执行完成每日目标</p>",
+        "<p><strong>恢复策略</strong>：配合7-14天手动搜索，逐步恢复账户状态</p>",
         "</div>",
         
-        "<h4>🎯 工作原理</h4>",
+        "<h4>🔍 状态检测逻辑</h4>",
         "<div style='padding: 10px; background: #e9ecef; border-radius: 5px;'>",
         "<ol>",
-        "<li><strong>进度记录</strong>：每次执行后自动记录完成次数到BoxJS</li>",
-        "<li><strong>智能计算</strong>：根据剩余目标计算本次实际执行次数</li>",
-        "<li><strong>分批执行</strong>：每次只执行配置的少量次数，避免触发限制</li>",
-        "<li><strong>完整显示</strong>：通知中显示每日总进度，而不是单次进度</li>",
-        "<li><strong>自动完成</strong>：当达到每日目标后自动跳过后续执行</li>",
+        "<li><strong>账户状态检查</strong>：查询rewards.bing.com获取账户状态</li>",
+        "<li><strong>限制关键词检测</strong>：检查响应中是否包含限制相关关键词</li>",
+        "<li><strong>智能决策</strong>：根据状态决定执行搜索或仅发送通知</li>",
+        "<li><strong>状态记录</strong>：自动更新账户状态到BoxJS</li>",
         "</ol>",
         "</div>",
         
-        "<h4>📈 执行示例</h4>",
-        "<pre>第1次执行：PC0/30 → PC3/30，移动0/20 → 移动3/20\n第2次执行：PC3/30 → PC6/30，移动3/20 → 移动6/20\n...\n第10次执行：PC27/30 → PC30/30，移动18/20 → 移动20/20\n✅ 今日任务完成，自动跳过后续执行</pre>",
+        "<h4>📱 通知类型说明</h4>",
+        "<div style='padding: 10px; background: #fff3cd; border-radius: 5px;'>",
+        "<p><strong>正常状态通知：</strong></p>",
+        "<pre>✅ 安全搜索完成\n获得积分: +6\n搜索次数: 4次\n当前积分: 1024\n账户等级: Level 2</pre>",
+        "<p><strong>限制状态通知：</strong></p>", 
+        "<pre>🚫 Bing账户受限制\n已跳过搜索任务\n当前积分: 1024\n限制详情: 检测到账户活动限制\n恢复建议: 立即停止自动化，进行7-14天手动恢复</pre>",
+        "<p><strong>跳过执行通知：</strong></p>",
+        "<pre>⏭️ 跳过搜索任务\n条件检查: 今日搜索已达上限 (8/8)\n账户状态: NORMAL\n当前积分: 1024\n等级: Level 2</pre>",
+        "</div>",
         
-        "<div style='padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; margin-top: 15px;'>",
-        "<p><strong>💡 使用技巧</strong></p>",
+        "<h4>🔄 恢复流程指南</h4>",
+        "<div style='padding: 10px; background: #cce7ff; border: 1px solid #99ceff; border-radius: 5px;'>",
+        "<p><strong>第一阶段：完全手动恢复 (7-14天)</strong></p>",
         "<ul>",
-        "<li><strong>避免限制</strong>：设置每次3-5次搜索，避免被Bing检测为机器人</li>",
-        "<li><strong>定时优化</strong>：配合每2-5分钟的定时任务，平稳完成每日目标</li>",
-        "<li><strong>进度查看</strong>：在BoxJS中实时查看PC和移动端的完成进度</li>",
-        "<li><strong>手动重置</strong>：如需重新开始，使用「手动重置进度」开关</li>",
-        "<li><strong>数据持久</strong>：所有进度数据保存在BoxJS中，重启设备不丢失</li>",
+        "<li>禁用所有自动化脚本</li>",
+        "<li>每天在真实浏览器中手动搜索</li>",
+        "<li>使用不同的搜索词和搜索模式</li>",
+        "<li>监控账户状态变化</li>",
+        "</ul>",
+        
+        "<p><strong>第二阶段：谨慎测试 (7天)</strong></p>",
+        "<ul>",
+        "<li>开启安全模式</li>",
+        "<li>设置极低搜索频率 (每天1-2次)</li>",
+        "<li>继续手动搜索维持真实行为</li>",
+        "<li>密切监控账户状态</li>",
+        "</ul>",
+        
+        "<p><strong>第三阶段：稳定使用</strong></p>",
+        "<ul>",
+        "<li>保持安全模式开启</li>",
+        "<li>使用推荐的保守配置</li>",
+        "<li>定期检查账户状态</li>",
+        "<li>混合手动和自动搜索</li>",
+        "</ul>",
+        "</div>",
+        
+        "<div style='padding: 10px; background: #ffebee; border: 1px solid #ffcdd2; border-radius: 5px; margin-top: 15px;'>",
+        "<p><strong>⚠️ 重要安全提示</strong></p>",
+        "<ul>",
+        "<li>受限制账户必须开启安全模式</li>",
+        "<li>恢复期间以手动搜索为主，自动化为辅</li>",
+        "<li>如再次出现限制提示，立即停止自动化</li>",
+        "<li>不要追求每日积分上限，安全第一</li>",
+        "<li>定期检查Cookie有效性，及时更新</li>",
         "</ul>",
         "</div>"
       ]
