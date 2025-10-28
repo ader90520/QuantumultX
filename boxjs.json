@@ -168,7 +168,12 @@
         "bing_max_daily",
         "bing_daily_count",
         "bing_account_status",
-        "bing_last_check_date"
+        "bing_last_check_date",
+        "bing_account_check",
+        "bing_point_check",
+        "bing_point_check_freq",
+        "bing_total_search_count",
+        "bing_last_point_check_at"
       ],
       "settings": [
         {
@@ -241,6 +246,28 @@
           "desc": "开启后脚本会检查账户状态，受限制时自动跳过搜索"
         },
         {
+          "id": "bing_account_check",
+          "name": "账号异常检测",
+          "val": true,
+          "type": "boolean",
+          "desc": "开启时检测账户受限状态，关闭时跳过检测直接执行搜索"
+        },
+        {
+          "id": "bing_point_check",
+          "name": "积分面板检测",
+          "val": true,
+          "type": "boolean",
+          "desc": "开启后在搜索过程中检测积分变化"
+        },
+        {
+          "id": "bing_point_check_freq",
+          "name": "积分检测频率",
+          "val": 5,
+          "type": "number",
+          "placeholder": "5",
+          "desc": "每几次搜索检测一次积分面板，建议5-10次。设置5表示每5次搜索检测一次积分"
+        },
+        {
           "id": "bing_max_daily", 
           "name": "每日最大搜索次数",
           "val": 8,
@@ -262,7 +289,7 @@
           "val": "UNKNOWN",
           "type": "text",
           "placeholder": "自动检测",
-          "desc": "自动记录账户状态：NORMAL-正常, RESTRICTED-受限制, UNKNOWN-未知"
+          "desc": "自动记录账户状态：SAFE-正常, RESTRICTED-受限制, UNKNOWN-未知"
         },
         {
           "id": "bing_last_check_date",
@@ -313,6 +340,22 @@
           "desc": "自动记录最后重置进度日期，用于每日重置功能"
         },
         {
+          "id": "bing_total_search_count",
+          "name": "总搜索次数",
+          "val": 0,
+          "type": "number",
+          "placeholder": "0",
+          "desc": "自动记录历史总搜索次数，用于积分检测频率计算"
+        },
+        {
+          "id": "bing_last_point_check_at",
+          "name": "上次积分检测位置",
+          "val": 0,
+          "type": "number",
+          "placeholder": "0",
+          "desc": "自动记录上次积分检测时的搜索次数位置"
+        },
+        {
           "id": "bingPointCookieKey",
           "name": "积分面板Cookie",
           "val": "",
@@ -359,13 +402,20 @@
           "val": false,
           "type": "boolean",
           "desc": "开启后将清除账户限制状态记录（用于手动恢复后）"
+        },
+        {
+          "id": "@bing.reset_search_count",
+          "name": "重置搜索计数",
+          "val": false,
+          "type": "boolean",
+          "desc": "开启后将重置总搜索次数记录（用于重新开始计数）"
         }
       ],
       "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js",
       "desc_html": [
-        "<h3>🏆 Bing积分安全智能版 v6.0</h3>",
+        "<h3>🏆 Bing积分安全智能版 v6.2</h3>",
         "<p>智能账户状态监控 + 安全搜索策略，避免账户限制</p>",
-        "<p style='color: #28a745;'><strong>新增：安全模式，自动检测账户限制状态，受限制时跳过搜索</strong></p>",
+        "<p style='color: #28a745;'><strong>新增：按搜索次数设置积分检测频率，支持每N次搜索检测一次积分面板</strong></p>",
         
         "<h4>🛡️ 安全保护机制</h4>",
         "<ul>",
@@ -373,44 +423,129 @@
         "<li><strong>智能跳过</strong>：检测到限制时自动跳过搜索，仅发送状态通知</li>",
         "<li><strong>频率控制</strong>：限制每日最大搜索次数，防止过度使用</li>",
         "<li><strong>保守策略</strong>：降低单次搜索次数，增加间隔时间</li>",
+        "<li><strong>灵活控制</strong>：支持关闭检测功能，满足不同使用场景</li>",
+        "<li><strong>精确检测</strong>：按实际搜索次数计算检测频率，更准确</li>",
         "</ul>",
         
-        "<h4>📊 推荐安全配置</h4>",
-        "<div style='padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
-        "<p><strong>受限制账户配置：</strong></p>",
+        "<h4>🎛️ 新增检测控制功能</h4>",
+        "<div style='padding: 10px; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 5px;'>",
+        "<p><strong>账号异常检测：</strong></p>",
         "<ul>",
-        "<li><strong>每次PC搜索次数</strong>：1-2次</li>",
-        "<li><strong>每次移动搜索次数</strong>：1-2次</li>",
-        "<li><strong>每日PC目标次数</strong>：10-15次</li>",
-        "<li><strong>每日移动目标次数</strong>：8-12次</li>",
-        "<li><strong>搜索间隔</strong>：30秒以上</li>",
-        "<li><strong>安全模式</strong>：必须开启</li>",
+        "<li><strong>开启</strong>：正常检测账户状态，受限时跳过搜索（推荐）</li>",
+        "<li><strong>关闭</strong>：跳过状态检查，直接执行搜索任务（紧急情况使用）</li>",
         "</ul>",
-        "<p><strong>恢复策略</strong>：配合7-14天手动搜索，逐步恢复账户状态</p>",
+        
+        "<p><strong>积分面板检测：</strong></p>",
+        "<ul>",
+        "<li><strong>开启</strong>：在搜索过程中检测积分变化（推荐）</li>",
+        "<li><strong>关闭</strong>：跳过积分检测，只执行搜索（减少API调用）</li>",
+        "</ul>",
+        
+        "<p><strong>积分检测频率（新功能）：</strong></p>",
+        "<ul>",
+        "<li><strong>设置范围</strong>：1-20次搜索检测一次</li>",
+        "<li><strong>推荐值</strong>：5-10次，平衡性能和准确性</li>",
+        "<li><strong>工作原理</strong>：按实际搜索次数计算，不是按脚本执行次数</li>",
+        "<li><strong>举例说明</strong>：设置5次，表示每5次搜索检测一次积分面板</li>",
+        "</ul>",
         "</div>",
         
-        "<h4>🔍 状态检测逻辑</h4>",
+        "<h4>📊 推荐配置方案</h4>",
+        "<div style='padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
+        "<p><strong>常规使用配置：</strong></p>",
+        "<ul>",
+        "<li><strong>每次PC搜索次数</strong>：2次</li>",
+        "<li><strong>每次移动搜索次数</strong>：2次</li>",
+        "<li><strong>搜索间隔</strong>：30秒</li>",
+        "<li><strong>积分检测频率</strong>：5次（每5次搜索检测一次）</li>",
+        "<li><strong>脚本执行频率</strong>：每5分钟（*/5 * * * *）</li>",
+        "<li><strong>效果</strong>：每执行3次脚本（累计6次搜索）检测一次积分</li>",
+        "</ul>",
+        
+        "<p><strong>受限制账户配置：</strong></p>",
+        "<ul>",
+        "<li><strong>每次PC搜索次数</strong>：1次</li>",
+        "<li><strong>每次移动搜索次数</strong>：1次</li>",
+        "<li><strong>搜索间隔</strong>：60秒</li>",
+        "<li><strong>积分检测频率</strong>：10次（每10次搜索检测一次）</li>",
+        "<li><strong>脚本执行频率</strong>：每10分钟（*/10 * * * *）</li>",
+        "<li><strong>效果</strong>：每执行5次脚本（累计10次搜索）检测一次积分</li>",
+        "</ul>",
+        "</div>",
+        
+        "<h4>🔧 使用场景配置</h4>",
+        "<div style='padding: 10px; background: #fff3cd; border-radius: 5px;'>",
+        "<p><strong>正常使用（推荐）：</strong></p>",
+        "<pre>账号异常检测: 开启\n积分面板检测: 开启\n检测频率: 5次</pre>",
+        
+        "<p><strong>减少API调用：</strong></p>",
+        "<pre>账号异常检测: 开启\n积分面板检测: 关闭\n检测频率: -</pre>",
+        
+        "<p><strong>紧急强制运行：</strong></p>",
+        "<pre>账号异常检测: 关闭\n积分面板检测: 关闭\n检测频率: -</pre>",
+        
+        "<p><strong>精确积分统计：</strong></p>",
+        "<pre>账号异常检测: 开启\n积分面板检测: 开启\n检测频率: 2次</pre>",
+        
+        "<p><strong>极省流量模式：</strong></p>",
+        "<pre>账号异常检测: 开启\n积分面板检测: 开启\n检测频率: 10次</pre>",
+        "</div>",
+        
+        "<h4>🔍 技术实现原理</h4>",
         "<div style='padding: 10px; background: #e9ecef; border-radius: 5px;'>",
         "<ol>",
-        "<li><strong>账户状态检查</strong>：查询rewards.bing.com获取账户状态</li>",
-        "<li><strong>限制关键词检测</strong>：检查响应中是否包含限制相关关键词</li>",
-        "<li><strong>智能决策</strong>：根据状态决定执行搜索或仅发送通知</li>",
-        "<li><strong>状态记录</strong>：自动更新账户状态到BoxJS</li>",
+        "<li><strong>搜索计数</strong>：每次成功搜索都会增加总搜索次数计数</li>",
+        "<li><strong>位置记录</strong>：记录上次积分检测时的搜索次数位置</li>",
+        "<li><strong>频率计算</strong>：计算距离上次检测的搜索次数间隔</li>",
+        "<li><strong>智能判断</strong>：当间隔达到设定频率时执行积分检测</li>",
+        "<li><strong>状态更新</strong>：更新检测位置，准备下一次检测</li>",
         "</ol>",
+        
+        "<p><strong>计算公式：</strong></p>",
+        "<pre>是否需要检测 = (总搜索次数 - 上次检测位置) >= 检测频率</pre>",
+        
+        "<p><strong>示例：</strong></p>",
+        "<pre>总搜索次数: 15次\n上次检测位置: 10次\n检测频率: 5次\n计算结果: (15-10)=5 >=5 → 需要检测</pre>",
         "</div>",
         
         "<h4>📱 通知类型说明</h4>",
-        "<div style='padding: 10px; background: #fff3cd; border-radius: 5px;'>",
+        "<div style='padding: 10px; background: #f8f9fa; border-radius: 5px;'>",
         "<p><strong>正常状态通知：</strong></p>",
-        "<pre>✅ 安全搜索完成\n获得积分: +6\n搜索次数: 4次\n当前积分: 1024\n账户等级: Level 2</pre>",
+        "<pre>✅ 安全搜索完成\n获得积分: +6\n搜索次数: 4次\n当前积分: 1024\n账户等级: Level 2\n总搜索次数: 156次</pre>",
+        
+        "<p><strong>直接搜索通知（检测关闭）：</strong></p>",
+        "<pre>✅ 直接搜索完成\n获得积分: +6 (检测关闭)\n搜索次数: 4次\n当前积分: 1024\n总搜索次数: 160次\n⚠️ 注意: 账号异常检测已关闭</pre>",
+        
         "<p><strong>限制状态通知：</strong></p>", 
-        "<pre>🚫 Bing账户受限制\n已跳过搜索任务\n当前积分: 1024\n限制详情: 检测到账户活动限制\n恢复建议: 立即停止自动化，进行7-14天手动恢复</pre>",
+        "<pre>🚫 Bing账户受限制\n已跳过搜索任务\n当前积分: 1024\n限制详情: 检测到账户活动限制\n恢复建议: 立即停止自动化\n💡 提示: 可关闭账号异常检测强制执行</pre>",
+        
         "<p><strong>跳过执行通知：</strong></p>",
-        "<pre>⏭️ 跳过搜索任务\n条件检查: 今日搜索已达上限 (8/8)\n账户状态: NORMAL\n当前积分: 1024\n等级: Level 2</pre>",
+        "<pre>⏭️ 跳过搜索任务\n条件检查: 今日搜索已达上限 (8/8)\n账户状态: SAFE\n当前积分: 1024\n异常检测: 开启\n积分检测: 开启(每5次搜索)\n总搜索次数: 164次</pre>",
+        "</div>",
+        
+        "<h4>⚙️ Cron表达式配置指南</h4>",
+        "<div style='padding: 10px; background: #cce7ff; border: 1px solid #99ceff; border-radius: 5px;'>",
+        "<p><strong>常用Cron表达式：</strong></p>",
+        "<ul>",
+        "<li><code>*/5 * * * *</code> - 每5分钟执行一次</li>",
+        "<li><code>*/10 * * * *</code> - 每10分钟执行一次</li>",
+        "<li><code>0 */2 * * *</code> - 每2小时执行一次</li>",
+        "<li><code>0 8,20 * * *</code> - 每天8点和20点执行</li>",
+        "</ul>",
+        
+        "<p><strong>配置建议：</strong></p>",
+        "<ul>",
+        "<li><strong>高频执行</strong>：*/5 * * * *（配合低检测频率）</li>",
+        "<li><strong>低频执行</strong>：*/30 * * * *（配合高检测频率）</li>",
+        "<li><strong>平衡模式</strong>：*/10 * * * *（配合中等检测频率）</li>",
+        "</ul>",
+        
+        "<p><strong>计算公式：</strong></p>",
+        "<pre>每日检测次数 ≈ (24 × 60) / 执行间隔分钟数\n每日搜索次数 ≈ 每次搜索次数 × 每日检测次数\n积分检测次数 ≈ 每日搜索次数 / 检测频率</pre>",
         "</div>",
         
         "<h4>🔄 恢复流程指南</h4>",
-        "<div style='padding: 10px; background: #cce7ff; border: 1px solid #99ceff; border-radius: 5px;'>",
+        "<div style='padding: 10px; background: #ffe0b2; border: 1px solid #ffb74d; border-radius: 5px;'>",
         "<p><strong>第一阶段：完全手动恢复 (7-14天)</strong></p>",
         "<ul>",
         "<li>禁用所有自动化脚本</li>",
@@ -421,10 +556,10 @@
         
         "<p><strong>第二阶段：谨慎测试 (7天)</strong></p>",
         "<ul>",
-        "<li>开启安全模式</li>",
+        "<li>开启安全模式和所有检测</li>",
         "<li>设置极低搜索频率 (每天1-2次)</li>",
+        "<li>设置高检测频率 (10次以上)</li>",
         "<li>继续手动搜索维持真实行为</li>",
-        "<li>密切监控账户状态</li>",
         "</ul>",
         
         "<p><strong>第三阶段：稳定使用</strong></p>",
@@ -439,11 +574,13 @@
         "<div style='padding: 10px; background: #ffebee; border: 1px solid #ffcdd2; border-radius: 5px; margin-top: 15px;'>",
         "<p><strong>⚠️ 重要安全提示</strong></p>",
         "<ul>",
-        "<li>受限制账户必须开启安全模式</li>",
+        "<li>受限制账户必须开启安全模式和账号异常检测</li>",
+        "<li>紧急情况下才关闭检测功能，使用后及时恢复</li>",
         "<li>恢复期间以手动搜索为主，自动化为辅</li>",
         "<li>如再次出现限制提示，立即停止自动化</li>",
         "<li>不要追求每日积分上限，安全第一</li>",
         "<li>定期检查Cookie有效性，及时更新</li>",
+        "<li>合理设置检测频率，避免过度调用API</li>",
         "</ul>",
         "</div>"
       ]
