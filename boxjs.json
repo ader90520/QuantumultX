@@ -1,6 +1,6 @@
 {
   "id": "ader90520.app.sub",
-  "name": "ader90520 脚本订阅合集", 
+  "name": "ader90520 脚本订阅合集",
   "description": "自用脚本合集，包含福利吧签到和Bing积分任务，兼容BoxJs以及Quantumult X",
   "author": "@ader90520",
   "icon": "https://raw.githubusercontent.com/leiyiyan/resource/main/icons/pyy.png",
@@ -63,14 +63,14 @@
           "name": "福利吧用户名",
           "val": "",
           "type": "text",
-          "placeholder": "通过圈X重写规则自动获取", 
+          "placeholder": "通过圈X重写规则自动获取",
           "desc": "已配置自动获取，无需手动填写"
         },
         {
           "id": "fuba_last_sign_date",
           "name": "最后签到日期",
           "val": "",
-          "type": "text", 
+          "type": "text",
           "placeholder": "自动记录",
           "desc": "自动记录最后成功签到的日期"
         },
@@ -84,7 +84,7 @@
         },
         {
           "id": "fuba_total_days",
-          "name": "总签到天数", 
+          "name": "总签到天数",
           "val": "0",
           "type": "number",
           "placeholder": "0",
@@ -109,7 +109,6 @@
       "desc_html": [
         "<h3>福利吧自动签到脚本</h3>",
         "<p style='color: orange;'><strong>Cookie和用户名已配置自动获取，无需手动填写</strong></p>",
-        
         "<h4>自动获取配置说明</h4>",
         "<ol>",
         "<li>确保Quantumult X重写规则中已启用福利吧Cookie获取规则</li>",
@@ -118,7 +117,6 @@
         "<li>成功获取后，上方输入框将显示自动获取的值</li>",
         "<li>签到脚本会自动使用这些凭证进行每日签到</li>",
         "</ol>",
-        
         "<h4>技术实现原理</h4>",
         "<ul>",
         "<li><strong>Cookie获取</strong>：通过重写规则拦截HTTP请求头中的Cookie信息</li>",
@@ -126,7 +124,6 @@
         "<li><strong>数据存储</strong>：使用$prefs API将数据持久化存储到BoxJS</li>",
         "<li><strong>自动验证</strong>：比对获取的用户名与预期用户名确保Cookie有效性</li>",
         "</ul>",
-        
         "<div style='padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; margin-top: 15px;'>",
         "<p><strong>重要提示</strong></p>",
         "<ul>",
@@ -158,8 +155,6 @@
         "bing_mobile_goal",
         "bing_pc_progress",
         "bing_mobile_progress",
-        "bing_pc_today_progress",
-        "bing_mobile_today_progress",
         "bing_interval",
         "bing_reset_hours",
         "bing_cache_point",
@@ -171,19 +166,17 @@
         "bing_daily_count",
         "bing_account_status",
         "bing_last_check_date",
-        "bing_account_check",
-        "bing_point_check",
-        "bing_point_check_freq",
-        "bing_total_search_count",
-        "bing_last_point_check_at",
-        "bing_last_progress_reset"
+        "bing_point_check_interval",
+        "bing_run_count",
+        "bing_min_interval",
+        "bing_max_interval"
       ],
       "settings": [
         {
           "id": "bing_cn",
           "name": "使用国区域名",
           "val": false,
-          "type": "boolean", 
+          "type": "boolean",
           "desc": "开启使用cn.bing.com，关闭使用www.bing.com。国际版更稳定，建议关闭"
         },
         {
@@ -192,19 +185,43 @@
           "val": 2,
           "type": "number",
           "placeholder": "2",
-          "desc": "每次执行时PC端搜索次数，受限制账户建议1-2次"
+          "desc": "每次执行时PC端搜索次数，限制1-3次，受限制账户建议1-2次[citation:1]"
         },
         {
-          "id": "bing_mobile_times", 
+          "id": "bing_mobile_times",
           "name": "每次移动搜索次数",
           "val": 2,
           "type": "number",
           "placeholder": "2",
-          "desc": "每次执行时移动端搜索次数，受限制账户建议1-2次"
+          "desc": "每次执行时移动端搜索次数，限制1-3次，受限制账户建议1-2次[citation:1]"
+        },
+        {
+          "id": "bing_min_interval",
+          "name": "最小搜索间隔(秒)",
+          "val": 4,
+          "type": "number",
+          "placeholder": "4",
+          "desc": "搜索之间的最小间隔时间，建议4-5秒模拟真实用户[citation:1]"
+        },
+        {
+          "id": "bing_max_interval",
+          "name": "最大搜索间隔(秒)",
+          "val": 5,
+          "type": "number",
+          "placeholder": "5",
+          "desc": "搜索之间的最大间隔时间，建议4-5秒模拟真实用户[citation:1]"
+        },
+        {
+          "id": "bing_point_check_interval",
+          "name": "积分检查间隔",
+          "val": 5,
+          "type": "number",
+          "placeholder": "5",
+          "desc": "每运行多少次脚本检查一次积分面板，建议5次避免频繁请求"
         },
         {
           "id": "bing_pc_goal",
-          "name": "每日PC目标次数", 
+          "name": "每日PC目标次数",
           "val": 15,
           "type": "number",
           "placeholder": "15",
@@ -214,23 +231,23 @@
           "id": "bing_mobile_goal",
           "name": "每日移动目标次数",
           "val": 12,
-          "type": "number", 
+          "type": "number",
           "placeholder": "12",
           "desc": "移动端每日总目标搜索次数，受限制账户建议降低目标"
         },
         {
           "id": "bing_interval",
-          "name": "搜索间隔(秒)", 
+          "name": "基础搜索间隔(秒)",
           "val": 30,
           "type": "number",
           "placeholder": "30",
-          "desc": "每次搜索之间的间隔时间，受限制账户建议30秒以上"
+          "desc": "不同搜索任务之间的间隔时间，受限制账户建议30秒以上"
         },
         {
           "id": "bing_reset_hours",
           "name": "每日重置时间(小时)",
           "val": 8,
-          "type": "number", 
+          "type": "number",
           "placeholder": "8",
           "desc": "设置每天几点重置任务，24小时制"
         },
@@ -245,66 +262,52 @@
           "id": "bing_safe_mode",
           "name": "安全模式",
           "val": true,
-          "type": "boolean", 
+          "type": "boolean",
           "desc": "开启后脚本会检查账户状态，受限制时自动跳过搜索"
         },
         {
-          "id": "bing_account_check",
-          "name": "账号异常检测",
-          "val": true,
-          "type": "boolean",
-          "desc": "开启时检测账户受限状态，关闭时跳过检测直接执行搜索"
-        },
-        {
-          "id": "bing_point_check",
-          "name": "积分面板检测",
-          "val": true,
-          "type": "boolean",
-          "desc": "开启后在搜索过程中检测积分变化"
-        },
-        {
-          "id": "bing_point_check_freq",
-          "name": "积分检测频率",
-          "val": 5,
-          "type": "number",
-          "placeholder": "5",
-          "desc": "每几次搜索检测一次积分面板，建议5-10次。设置5表示每5次搜索检测一次积分"
-        },
-        {
-          "id": "bing_max_daily", 
+          "id": "bing_max_daily",
           "name": "每日最大搜索次数",
           "val": 8,
           "type": "number",
           "placeholder": "8",
-          "desc": "每日最多执行搜索次数，防止过度使用"
+          "desc": "每日最多执行搜索次数，防止过度使用触发限制"
         },
         {
           "id": "bing_daily_count",
-          "name": "今日已搜索次数", 
+          "name": "今日已搜索次数",
           "val": 0,
           "type": "number",
           "placeholder": "0",
           "desc": "自动记录今日已执行搜索次数，无需手动修改"
         },
         {
-          "id": "bing_account_status", 
+          "id": "bing_run_count",
+          "name": "运行次数计数",
+          "val": 0,
+          "type": "number",
+          "placeholder": "0",
+          "desc": "自动记录脚本运行次数，用于积分检查间隔，无需手动修改"
+        },
+        {
+          "id": "bing_account_status",
           "name": "账户状态",
           "val": "UNKNOWN",
           "type": "text",
           "placeholder": "自动检测",
-          "desc": "自动记录账户状态：SAFE-正常, RESTRICTED-受限制, UNKNOWN-未知"
+          "desc": "自动记录账户状态：NORMAL-正常, RESTRICTED-受限制, UNKNOWN-未知"
         },
         {
           "id": "bing_last_check_date",
           "name": "最后检查日期",
           "val": "",
-          "type": "text", 
+          "type": "text",
           "placeholder": "自动记录",
           "desc": "自动记录最后检查账户状态的日期"
         },
         {
           "id": "bing_cache_point",
-          "name": "缓存积分", 
+          "name": "缓存积分",
           "val": 0,
           "type": "number",
           "placeholder": "0",
@@ -312,35 +315,19 @@
         },
         {
           "id": "bing_pc_progress",
-          "name": "PC累计进度",
-          "val": 0,
-          "type": "number",
-          "placeholder": "0", 
-          "desc": "自动记录PC端累计已完成次数，无需手动修改"
-        },
-        {
-          "id": "bing_mobile_progress",
-          "name": "移动累计进度",
-          "val": 0,
-          "type": "number",
-          "placeholder": "0",
-          "desc": "自动记录移动端累计已完成次数，无需手动修改" 
-        },
-        {
-          "id": "bing_pc_today_progress",
           "name": "PC今日进度",
           "val": 0,
           "type": "number",
-          "placeholder": "0", 
-          "desc": "自动记录PC端今日已完成次数，每日自动重置"
+          "placeholder": "0",
+          "desc": "自动记录PC端今日已完成次数，无需手动修改"
         },
         {
-          "id": "bing_mobile_today_progress",
+          "id": "bing_mobile_progress",
           "name": "移动今日进度",
           "val": 0,
           "type": "number",
           "placeholder": "0",
-          "desc": "自动记录移动端今日已完成次数，每日自动重置" 
+          "desc": "自动记录移动端今日已完成次数，无需手动修改"
         },
         {
           "id": "bing_last_success_date",
@@ -354,33 +341,9 @@
           "id": "bing_last_reset_date",
           "name": "最后重置日期",
           "val": "",
-          "type": "text", 
-          "placeholder": "自动记录",
-          "desc": "自动记录最后重置进度日期，用于每日重置功能"
-        },
-        {
-          "id": "bing_total_search_count",
-          "name": "总搜索次数",
-          "val": 0,
-          "type": "number",
-          "placeholder": "0",
-          "desc": "自动记录历史总搜索次数，用于积分检测频率计算"
-        },
-        {
-          "id": "bing_last_point_check_at",
-          "name": "上次积分检测位置",
-          "val": 0,
-          "type": "number",
-          "placeholder": "0",
-          "desc": "自动记录上次积分检测时的搜索次数位置"
-        },
-        {
-          "id": "bing_last_progress_reset",
-          "name": "最后进度重置日期",
-          "val": "",
           "type": "text",
           "placeholder": "自动记录",
-          "desc": "自动记录最后重置今日进度的日期"
+          "desc": "自动记录最后重置进度日期，用于每日重置功能"
         },
         {
           "id": "bingPointCookieKey",
@@ -388,7 +351,7 @@
           "val": "",
           "type": "textarea",
           "autoGrow": true,
-          "placeholder": "自动获取 - 访问rewards.bing.com", 
+          "placeholder": "自动获取 - 访问rewards.bing.com",
           "desc": "用于获取积分任务列表和执行积分任务"
         },
         {
@@ -401,213 +364,76 @@
           "desc": "用于PC端搜索任务，请使用PC浏览器获取"
         },
         {
-          "id": "bingSearchCookieMobileKey", 
+          "id": "bingSearchCookieMobileKey",
           "name": "移动端搜索Cookie",
           "val": "",
-          "type": "textarea", 
+          "type": "textarea",
           "autoGrow": true,
           "placeholder": "自动获取 - 在移动浏览器访问Bing搜索",
           "desc": "用于移动端搜索任务，请使用移动浏览器获取"
         },
         {
           "id": "@bing.diagnose",
-          "name": "运行诊断模式", 
+          "name": "运行诊断模式",
           "val": false,
           "type": "boolean",
           "desc": "开启后下次执行将运行Cookie诊断，检查所有Cookie状态和配置"
         },
         {
           "id": "@bing.reset_progress",
-          "name": "手动重置进度", 
+          "name": "手动重置进度",
           "val": false,
           "type": "boolean",
           "desc": "开启后将立即重置今日进度（下次执行时生效）"
         },
         {
-          "id": "@bing.reset_restriction", 
+          "id": "@bing.reset_restriction",
           "name": "重置限制状态",
           "val": false,
           "type": "boolean",
           "desc": "开启后将清除账户限制状态记录（用于手动恢复后）"
-        },
-        {
-          "id": "@bing.reset_search_count",
-          "name": "重置搜索计数",
-          "val": false,
-          "type": "boolean",
-          "desc": "开启后将重置总搜索次数记录（用于重新开始计数）"
-        },
-        {
-          "id": "@bing.auto_reset_progress",
-          "name": "自动重置今日进度",
-          "val": true,
-          "type": "boolean",
-          "desc": "开启后每日自动重置PC和移动今日进度"
         }
       ],
       "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js",
       "desc_html": [
-        "<h3>🏆 Bing积分安全智能版 v6.3</h3>",
-        "<p>智能账户状态监控 + 安全搜索策略，避免账户限制</p>",
-        "<p style='color: #28a745;'><strong>修复：PC今日进度和移动端今日进度记录问题，新增自动重置功能</strong></p>",
-        
-        "<h4>🛡️ 安全保护机制</h4>",
+        "<h3>🏆 Bing积分安全智能版 v6.1</h3>",
+        "<p>智能账户状态监控 + 真实模拟搜索 + 安全防护机制</p>",
+        "<p style='color: #28a745;'><strong>新增：4-5秒随机搜索间隔，真实模拟人类行为，每5次运行检查积分面板</strong></p>",
+        "<h4>🎯 核心优化特性</h4>",
         "<ul>",
-        "<li><strong>状态监控</strong>：每次执行前检查账户限制状态</li>",
-        "<li><strong>智能跳过</strong>：检测到限制时自动跳过搜索，仅发送状态通知</li>",
-        "<li><strong>频率控制</strong>：限制每日最大搜索次数，防止过度使用</li>",
-        "<li><strong>保守策略</strong>：降低单次搜索次数，增加间隔时间</li>",
-        "<li><strong>灵活控制</strong>：支持关闭检测功能，满足不同使用场景</li>",
-        "<li><strong>精确检测</strong>：按实际搜索次数计算检测频率，更准确</li>",
-        "<li><strong>进度记录</strong>：精确记录PC和移动端今日进度，每日自动重置</li>",
+        "<li><strong>真实搜索间隔</strong>：每次搜索间隔4-5秒随机时间，模拟真实用户操作[citation:1]</li>",
+        "<li><strong>智能次数控制</strong>：PC/移动端各1-3次搜索（BoxJS可配置），避免检测</li>",
+        "<li><strong>智能积分检查</strong>：每运行5次脚本检查一次积分面板（可配置数字）</li>",
+        "<li><strong>安全防护</strong>：自动检测账户限制状态，受限制时跳过搜索</li>",
+        "<li><strong>Cron适配</strong>：完美适配*/2 * * * *定时任务，分布式执行</li>",
         "</ul>",
-        
-        "<h4>📈 进度记录系统</h4>",
-        "<div style='padding: 10px; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 5px;'>",
-        "<p><strong>进度类型说明：</strong></p>",
-        "<ul>",
-        "<li><strong>PC累计进度</strong>：PC端历史总搜索次数，不会自动重置</li>",
-        "<li><strong>移动累计进度</strong>：移动端历史总搜索次数，不会自动重置</li>",
-        "<li><strong>PC今日进度</strong>：PC端今日搜索次数，每日自动重置</li>",
-        "<li><strong>移动今日进度</strong>：移动端今日搜索次数，每日自动重置</li>",
-        "<li><strong>今日已搜索次数</strong>：PC+移动总搜索次数，每日自动重置</li>",
-        "</ul>",
-        
-        "<p><strong>自动重置机制：</strong></p>",
-        "<ul>",
-        "<li>每次脚本执行时检查是否需要重置今日进度</li>",
-        "<li>如果最后重置日期不是今天，则自动重置今日进度</li>",
-        "<li>重置时间基于系统日期，不受时区影响</li>",
-        "<li>支持手动强制重置今日进度</li>",
-        "</ul>",
-        "</div>",
-        
-        "<h4>🎛️ 检测控制功能</h4>",
-        "<div style='padding: 10px; background: #f3e5f5; border: 1px solid #ce93d8; border-radius: 5px;'>",
-        "<p><strong>账号异常检测：</strong></p>",
-        "<ul>",
-        "<li><strong>开启</strong>：正常检测账户状态，受限时跳过搜索（推荐）</li>",
-        "<li><strong>关闭</strong>：跳过状态检查，直接执行搜索任务（紧急情况使用）</li>",
-        "</ul>",
-        
-        "<p><strong>积分面板检测：</strong></p>",
-        "<ul>",
-        "<li><strong>开启</strong>：在搜索过程中检测积分变化（推荐）</li>",
-        "<li><strong>关闭</strong>：跳过积分检测，只执行搜索（减少API调用）</li>",
-        "</ul>",
-        
-        "<p><strong>积分检测频率：</strong></p>",
-        "<ul>",
-        "<li><strong>设置范围</strong>：1-20次搜索检测一次</li>",
-        "<li><strong>推荐值</strong>：5-10次，平衡性能和准确性</li>",
-        "<li><strong>工作原理</strong>：按实际搜索次数计算，不是按脚本执行次数</li>",
-        "</ul>",
-        
-        "<p><strong>自动重置今日进度：</strong></p>",
-        "<ul>",
-        "<li><strong>开启</strong>：每日自动重置PC和移动今日进度（推荐）</li>",
-        "<li><strong>关闭</strong>：手动控制进度重置</li>",
-        "</ul>",
-        "</div>",
-        
-        "<h4>📊 推荐配置方案</h4>",
+        "<h4>⚙️ 推荐安全配置</h4>",
         "<div style='padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
-        "<p><strong>常规使用配置：</strong></p>",
+        "<p><strong>受限制账户恢复配置：</strong></p>",
         "<ul>",
-        "<li><strong>每次PC搜索次数</strong>：2次</li>",
-        "<li><strong>每次移动搜索次数</strong>：2次</li>",
-        "<li><strong>搜索间隔</strong>：30秒</li>",
-        "<li><strong>积分检测频率</strong>：5次</li>",
-        "<li><strong>自动重置今日进度</strong>：开启</li>",
-        "<li><strong>脚本执行频率</strong>：每5分钟（*/5 * * * *）</li>",
+        "<li><strong>每次PC搜索次数</strong>：1-2次</li>",
+        "<li><strong>每次移动搜索次数</strong>：1-2次</li>",
+        "<li><strong>搜索间隔</strong>：4-5秒随机</li>",
+        "<li><strong>积分检查间隔</strong>：5次（可调整）</li>",
+        "<li><strong>安全模式</strong>：必须开启</li>",
         "</ul>",
-        
-        "<p><strong>进度监控效果：</strong></p>",
-        "<pre>第1次执行: PC今日进度=2, 移动今日进度=2, 今日总次数=4\n第2次执行: PC今日进度=4, 移动今日进度=4, 今日总次数=8\n第3次执行: PC今日进度=6, 移动今日进度=6, 今日总次数=12\n次日自动重置: PC今日进度=0, 移动今日进度=0, 今日总次数=0</pre>",
         "</div>",
-        
-        "<h4>🔧 使用场景配置</h4>",
-        "<div style='padding: 10px; background: #fff3cd; border-radius: 5px;'>",
-        "<p><strong>正常使用（推荐）：</strong></p>",
-        "<pre>账号异常检测: 开启\n积分面板检测: 开启\n检测频率: 5次\n自动重置今日进度: 开启</pre>",
-        
-        "<p><strong>减少API调用：</strong></p>",
-        "<pre>账号异常检测: 开启\n积分面板检测: 关闭\n检测频率: -\n自动重置今日进度: 开启</pre>",
-        
-        "<p><strong>精确进度跟踪：</strong></p>",
-        "<pre>账号异常检测: 开启\n积分面板检测: 开启\n检测频率: 2次\n自动重置今日进度: 开启</pre>",
-        
-        "<p><strong>手动进度管理：</strong></p>",
-        "<pre>账号异常检测: 开启\n积分面板检测: 开启\n检测频率: 5次\n自动重置今日进度: 关闭</pre>",
-        "</div>",
-        
-        "<h4>📱 通知类型说明</h4>",
-        "<div style='padding: 10px; background: #f8f9fa; border-radius: 5px;'>",
-        "<p><strong>正常状态通知（带进度）：</strong></p>",
-        "<pre>✅ 安全搜索完成\n获得积分: +6\n搜索次数: 4次\nPC今日进度: 2/15\n移动今日进度: 2/12\n当前积分: 1024\n总搜索次数: 156次</pre>",
-        
-        "<p><strong>进度重置通知：</strong></p>",
-        "<pre>🔄 今日进度已重置\nPC今日进度: 0/15\n移动今日进度: 0/12\n今日总次数: 0/8\n开始新的一天的搜索任务</pre>",
-        
-        "<p><strong>限制状态通知：</strong></p>", 
-        "<pre>🚫 Bing账户受限制\n已跳过搜索任务\n当前积分: 1024\nPC今日进度: 6/15\n移动今日进度: 4/12\n恢复建议: 立即停止自动化</pre>",
-        "</div>",
-        
-        "<h4>⚙️ 技术实现细节</h4>",
+        "<h4>🔄 执行流程优化</h4>",
         "<div style='padding: 10px; background: #e9ecef; border-radius: 5px;'>",
-        "<p><strong>进度记录逻辑：</strong></p>",
-        "<ol>",
-        "<li>每次成功搜索后实时更新对应设备的今日进度</li>",
-        "<li>PC搜索更新<code>bing_pc_today_progress</code></li>",
-        "<li>移动搜索更新<code>bing_mobile_today_progress</code></li>",
-        "<li>同时更新累计进度<code>bing_pc_progress</code>和<code>bing_mobile_progress</code></li>",
-        "<li>每日首次执行时自动重置今日进度</li>",
-        "</ol>",
-        
-        "<p><strong>重置检查机制：</strong></p>",
-        "<pre>如果 (最后重置日期 != 今天) {\n    重置PC今日进度 = 0\n    重置移动今日进度 = 0\n    重置今日总次数 = 0\n    更新最后重置日期 = 今天\n    发送进度重置通知\n}</pre>",
-        
-        "<p><strong>进度验证：</strong></p>",
-        "<ul>",
-        "<li>进度值会在每次搜索后立即保存到BoxJS</li>",
-        "<li>支持实时查看搜索进度变化</li>",
-        "<li>进度数据持久化存储，重启设备不丢失</li>",
-        "</ul>",
+        "<pre>第1次执行 (09:00) → PC:1次, 移动:1次 → 间隔4.3秒 → 获得积分\n第2次执行 (09:02) → PC:1次, 移动:1次 → 间隔4.8秒 → 获得积分  \n第3次执行 (09:04) → PC:1次, 移动:1次 → 间隔4.1秒 → 获得积分\n第4次执行 (09:06) → PC:1次, 移动:1次 → 间隔4.6秒 → 获得积分\n第5次执行 (09:08) → PC:1次, 移动:1次 → 间隔4.2秒 → 检查积分面板</pre>",
         "</div>",
-        
-        "<h4>🔄 故障排除指南</h4>",
-        "<div style='padding: 10px; background: #ffe0b2; border: 1px solid #ffb74d; border-radius: 5px;'>",
-        "<p><strong>进度不更新问题：</strong></p>",
-        "<ul>",
-        "<li><strong>检查Cookie有效性</strong>：无效Cookie会导致搜索失败，进度不更新</li>",
-        "<li><strong>检查网络连接</strong>：网络问题可能导致搜索请求失败</li>",
-        "<li><strong>检查脚本权限</strong>：确保脚本有写入BoxJS的权限</li>",
-        "<li><strong>查看执行日志</strong>：开启调试模式查看详细执行过程</li>",
-        "</ul>",
-        
-        "<p><strong>进度重置问题：</strong></p>",
-        "<ul>",
-        "<li><strong>手动重置</strong>：使用\"手动重置进度\"开关强制重置</li>",
-        "<li><strong>检查日期</strong>：确保设备日期和时间设置正确</li>",
-        "<li><strong>重置记录</strong>：检查\"最后进度重置日期\"是否正确更新</li>",
-        "</ul>",
-        
-        "<p><strong>进度显示异常：</strong></p>",
-        "<ul>",
-        "<li><strong>清除缓存</strong>：重启BoxJS应用清除缓存</li>",
-        "<li><strong>重新订阅</strong>：删除后重新添加订阅</li>",
-        "<li><strong>检查冲突</strong>：确保没有其他脚本修改相同配置项</li>",
-        "</ul>",
+        "<h4>🔧 配套脚本配置</h4>",
+        "<div style='padding: 10px; background: #cce7ff; border: 1px solid #99ceff; border-radius: 5px;'>",
+        "<p><strong>Quantumult X 定时任务：</strong></p>",
+        "<pre>[task_local]\n# Bing积分任务 - 每2分钟执行一次\n*/2 * * * * https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js, tag=Bing积分, enabled=true</pre>",
         "</div>",
-        
         "<div style='padding: 10px; background: #ffebee; border: 1px solid #ffcdd2; border-radius: 5px; margin-top: 15px;'>",
-        "<p><strong>⚠️ 重要提示</strong></p>",
+        "<p><strong>⚠️ 重要安全提示</strong></p>",
         "<ul>",
-        "<li>进度记录依赖成功的搜索请求，搜索失败不会记录进度</li>",
-        "<li>自动重置基于系统日期，请确保设备日期时间准确</li>",
-        "<li>进度数据仅供参考，实际积分以Bing官方为准</li>",
-        "<li>如遇进度异常，可使用手动重置功能恢复</li>",
-        "<li>定期检查Cookie有效性，确保搜索功能正常</li>",
+        "<li>受限制账户必须开启安全模式，优先进行7-14天手动恢复</li>",
+        "<li>不要追求每日积分上限，安全稳定比获取更多积分更重要</li>",
+        "<li>如再次出现限制提示，立即停止自动化并延长手动恢复期</li>",
+        "<li>定期检查Cookie有效性，及时更新过期Cookie</li>",
         "</ul>",
         "</div>"
       ]
