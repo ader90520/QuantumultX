@@ -137,7 +137,7 @@
     },
     {
       "id": "bing_complete",
-      "name": "Bing积分智能版",
+      "name": "Bing积分安全版",
       "author": "@ader90520",
       "repo": "https://github.com/ader90520/QuantumultX",
       "icons": [
@@ -169,7 +169,9 @@
         "bing_point_check_interval",
         "bing_run_count",
         "bing_min_interval",
-        "bing_max_interval"
+        "bing_max_interval",
+        "bing_last_points",
+        "bing_consecutive_failures"
       ],
       "settings": [
         {
@@ -182,66 +184,66 @@
         {
           "id": "bing_pc_times",
           "name": "每次PC搜索次数",
-          "val": 2,
+          "val": 1,
           "type": "number",
-          "placeholder": "2",
-          "desc": "每次执行时PC端搜索次数，限制1-3次，受限制账户建议1-2次[citation:1]"
+          "placeholder": "1",
+          "desc": "每次执行时PC端搜索次数，限制1-2次，积分不增加时建议1次"
         },
         {
           "id": "bing_mobile_times",
           "name": "每次移动搜索次数",
-          "val": 2,
+          "val": 1,
           "type": "number",
-          "placeholder": "2",
-          "desc": "每次执行时移动端搜索次数，限制1-3次，受限制账户建议1-2次[citation:1]"
+          "placeholder": "1",
+          "desc": "每次执行时移动端搜索次数，限制1-2次，积分不增加时建议1次"
         },
         {
           "id": "bing_min_interval",
           "name": "最小搜索间隔(秒)",
-          "val": 4,
+          "val": 300,
           "type": "number",
-          "placeholder": "4",
-          "desc": "搜索之间的最小间隔时间，建议4-5秒模拟真实用户[citation:1]"
+          "placeholder": "300",
+          "desc": "搜索之间的最小间隔时间，建议300秒(5分钟)以上"
         },
         {
           "id": "bing_max_interval",
           "name": "最大搜索间隔(秒)",
-          "val": 5,
+          "val": 600,
           "type": "number",
-          "placeholder": "5",
-          "desc": "搜索之间的最大间隔时间，建议4-5秒模拟真实用户[citation:1]"
-        },
-        {
-          "id": "bing_point_check_interval",
-          "name": "积分检查间隔",
-          "val": 5,
-          "type": "number",
-          "placeholder": "5",
-          "desc": "每运行多少次脚本检查一次积分面板，建议5次避免频繁请求"
-        },
-        {
-          "id": "bing_pc_goal",
-          "name": "每日PC目标次数",
-          "val": 15,
-          "type": "number",
-          "placeholder": "15",
-          "desc": "PC端每日总目标搜索次数，受限制账户建议降低目标"
-        },
-        {
-          "id": "bing_mobile_goal",
-          "name": "每日移动目标次数",
-          "val": 12,
-          "type": "number",
-          "placeholder": "12",
-          "desc": "移动端每日总目标搜索次数，受限制账户建议降低目标"
+          "placeholder": "600",
+          "desc": "搜索之间的最大间隔时间，建议600秒(10分钟)以上"
         },
         {
           "id": "bing_interval",
           "name": "基础搜索间隔(秒)",
-          "val": 30,
+          "val": 600,
           "type": "number",
-          "placeholder": "30",
-          "desc": "不同搜索任务之间的间隔时间，受限制账户建议30秒以上"
+          "placeholder": "600",
+          "desc": "不同搜索任务之间的基础间隔时间，建议600秒(10分钟)以上"
+        },
+        {
+          "id": "bing_point_check_interval",
+          "name": "积分检查间隔",
+          "val": 3,
+          "type": "number",
+          "placeholder": "3",
+          "desc": "每运行多少次脚本检查一次积分面板，建议3次避免频繁请求"
+        },
+        {
+          "id": "bing_pc_goal",
+          "name": "每日PC目标次数",
+          "val": 8,
+          "type": "number",
+          "placeholder": "8",
+          "desc": "PC端每日总目标搜索次数，积分不增加时建议降低目标"
+        },
+        {
+          "id": "bing_mobile_goal",
+          "name": "每日移动目标次数",
+          "val": 6,
+          "type": "number",
+          "placeholder": "6",
+          "desc": "移动端每日总目标搜索次数，积分不增加时建议降低目标"
         },
         {
           "id": "bing_reset_hours",
@@ -268,10 +270,10 @@
         {
           "id": "bing_max_daily",
           "name": "每日最大搜索次数",
-          "val": 8,
+          "val": 4,
           "type": "number",
-          "placeholder": "8",
-          "desc": "每日最多执行搜索次数，防止过度使用触发限制"
+          "placeholder": "4",
+          "desc": "每日最多执行搜索次数，积分不增加时建议大幅降低"
         },
         {
           "id": "bing_daily_count",
@@ -288,6 +290,22 @@
           "type": "number",
           "placeholder": "0",
           "desc": "自动记录脚本运行次数，用于积分检查间隔，无需手动修改"
+        },
+        {
+          "id": "bing_consecutive_failures",
+          "name": "连续失败次数",
+          "val": 0,
+          "type": "number",
+          "placeholder": "0",
+          "desc": "自动记录连续未获得积分的次数，无需手动修改"
+        },
+        {
+          "id": "bing_last_points",
+          "name": "上次积分记录",
+          "val": 0,
+          "type": "number",
+          "placeholder": "0",
+          "desc": "自动记录上次积分，用于检测积分是否增加，无需手动修改"
         },
         {
           "id": "bing_account_status",
@@ -392,48 +410,55 @@
           "val": false,
           "type": "boolean",
           "desc": "开启后将清除账户限制状态记录（用于手动恢复后）"
+        },
+        {
+          "id": "@bing.reset_failures",
+          "name": "重置失败计数",
+          "val": false,
+          "type": "boolean",
+          "desc": "开启后将清除连续失败次数记录"
         }
       ],
       "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js",
       "desc_html": [
-        "<h3>🏆 Bing积分安全智能版 v6.1</h3>",
-        "<p>智能账户状态监控 + 真实模拟搜索 + 安全防护机制</p>",
-        "<p style='color: #28a745;'><strong>新增：4-5秒随机搜索间隔，真实模拟人类行为，每5次运行检查积分面板</strong></p>",
-        "<h4>🎯 核心优化特性</h4>",
+        "<h3>🏆 Bing积分安全优化版 v6.2</h3>",
+        "<p>解决积分不增加问题，大幅延长搜索间隔，智能跳过无效搜索</p>",
+        "<p style='color: #28a745;'><strong>新增：积分不增加自动跳过，搜索间隔延长至5-10分钟，连续失败保护机制</strong></p>",
+        "<h4>🛡️ 核心安全优化</h4>",
         "<ul>",
-        "<li><strong>真实搜索间隔</strong>：每次搜索间隔4-5秒随机时间，模拟真实用户操作[citation:1]</li>",
-        "<li><strong>智能次数控制</strong>：PC/移动端各1-3次搜索（BoxJS可配置），避免检测</li>",
-        "<li><strong>智能积分检查</strong>：每运行5次脚本检查一次积分面板（可配置数字）</li>",
-        "<li><strong>安全防护</strong>：自动检测账户限制状态，受限制时跳过搜索</li>",
-        "<li><strong>Cron适配</strong>：完美适配*/2 * * * *定时任务，分布式执行</li>",
+        "<li><strong>积分增加检测</strong>：自动检测积分是否增加，未增加时跳过后续搜索</li>",
+        "<li><strong>大幅延长间隔</strong>：搜索间隔延长至5-10分钟，避免频繁请求</li>",
+        "<li><strong>连续失败保护</strong>：连续3次未获积分自动暂停搜索</li>",
+        "<li><strong>智能间隔调整</strong>：失败次数越多，搜索间隔自动延长</li>",
+        "<li><strong>严格验证机制</strong>：搜索响应验证，确保搜索真正有效</li>",
         "</ul>",
-        "<h4>⚙️ 推荐安全配置</h4>",
+        "<h4>⚙️ 推荐恢复配置</h4>",
         "<div style='padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px;'>",
-        "<p><strong>受限制账户恢复配置：</strong></p>",
+        "<p><strong>积分不增加时的恢复配置：</strong></p>",
         "<ul>",
-        "<li><strong>每次PC搜索次数</strong>：1-2次</li>",
-        "<li><strong>每次移动搜索次数</strong>：1-2次</li>",
-        "<li><strong>搜索间隔</strong>：4-5秒随机</li>",
-        "<li><strong>积分检查间隔</strong>：5次（可调整）</li>",
-        "<li><strong>安全模式</strong>：必须开启</li>",
+        "<li><strong>每次PC搜索次数</strong>：1次</li>",
+        "<li><strong>每次移动搜索次数</strong>：1次</li>",
+        "<li><strong>搜索间隔</strong>：5-10分钟随机</li>",
+        "<li><strong>每日最大搜索</strong>：4次</li>",
+        "<li><strong>积分检查间隔</strong>：3次运行检查一次</li>",
         "</ul>",
         "</div>",
-        "<h4>🔄 执行流程优化</h4>",
+        "<h4>🔍 智能保护机制</h4>",
         "<div style='padding: 10px; background: #e9ecef; border-radius: 5px;'>",
-        "<pre>第1次执行 (09:00) → PC:1次, 移动:1次 → 间隔4.3秒 → 获得积分\n第2次执行 (09:02) → PC:1次, 移动:1次 → 间隔4.8秒 → 获得积分  \n第3次执行 (09:04) → PC:1次, 移动:1次 → 间隔4.1秒 → 获得积分\n第4次执行 (09:06) → PC:1次, 移动:1次 → 间隔4.6秒 → 获得积分\n第5次执行 (09:08) → PC:1次, 移动:1次 → 间隔4.2秒 → 检查积分面板</pre>",
+        "<pre>检测到积分不增加 → 延长搜索间隔 → 连续3次失败 → 自动暂停搜索\n↓\n建议手动搜索恢复 → 账户状态正常后 → 重置失败计数 → 重新开始</pre>",
         "</div>",
-        "<h4>🔧 配套脚本配置</h4>",
+        "<h4>📊 执行效果示例</h4>",
         "<div style='padding: 10px; background: #cce7ff; border: 1px solid #99ceff; border-radius: 5px;'>",
-        "<p><strong>Quantumult X 定时任务：</strong></p>",
-        "<pre>[task_local]\n# Bing积分任务 - 每2分钟执行一次\n*/2 * * * * https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/Bing/bing.js, tag=Bing积分, enabled=true</pre>",
+        "<pre>第1次执行: PC1次, 移动1次 → 等待7分钟 → 积分+0 (失败1次)\n第2次执行: PC1次, 移动1次 → 等待9分钟 → 积分+0 (失败2次)  \n第3次执行: PC1次, 移动1次 → 等待11分钟 → 积分+0 (失败3次)\n第4次执行: 🚫 自动跳过，连续3次未获积分</pre>",
         "</div>",
         "<div style='padding: 10px; background: #ffebee; border: 1px solid #ffcdd2; border-radius: 5px; margin-top: 15px;'>",
-        "<p><strong>⚠️ 重要安全提示</strong></p>",
+        "<p><strong>⚠️ 重要恢复建议</strong></p>",
         "<ul>",
-        "<li>受限制账户必须开启安全模式，优先进行7-14天手动恢复</li>",
-        "<li>不要追求每日积分上限，安全稳定比获取更多积分更重要</li>",
-        "<li>如再次出现限制提示，立即停止自动化并延长手动恢复期</li>",
-        "<li>定期检查Cookie有效性，及时更新过期Cookie</li>",
+        "<li>如连续多次积分不增加，建议完全停止自动化7-14天</li>",
+        "<li>在此期间进行真实手动搜索，恢复账户健康状态</li>",
+        "<li>检查Cookie是否过期，及时更新有效Cookie</li>",
+        "<li>不要强行增加搜索频率，安全比积分更重要</li>",
+        "<li>使用'重置失败计数'功能在手动恢复后重新开始</li>",
         "</ul>",
         "</div>"
       ]
