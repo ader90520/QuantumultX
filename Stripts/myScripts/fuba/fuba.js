@@ -9,19 +9,12 @@ function getConfig() {
         domain: 'www.wnflb2023.com'
     };
     
-    // 方法1: 尝试从BoxJS环境变量获取
-    if (typeof $environment !== 'undefined') {
-        config.cookie = $environment['fuba_cookie'] || $environment['fuba-cookie'] || '';
-        config.username = $environment['fuba_username'] || $environment['fuba-username'] || '';
-        config.domain = $environment['fuba_domain'] || $environment['fuba-domain'] || 'www.wnflb2023.com';
-    }
+    // 从BoxJS持久化存储获取配置（主要方式）
+    config.cookie = $prefs.valueForKey('fuba_cookie') || '';
+    config.username = $prefs.valueForKey('fuba_username') || '';
+    config.domain = $prefs.valueForKey('fuba_domain') || 'www.wnflb2023.com';
     
-    // 方法2: 通过持久化存储获取（备用方案）
-    if (!config.cookie) config.cookie = $prefs.valueForKey('fuba_cookie');
-    if (!config.username) config.username = $prefs.valueForKey('fuba_username');
-    if (!config.domain) config.domain = $prefs.valueForKey('fuba_domain') || 'www.wnflb2023.com';
-    
-    // 方法3: 通过参数获取
+    // 通过参数获取（覆盖，用于调试或临时传值）
     if (typeof $argument !== 'undefined' && $argument) {
         $argument.split('&').forEach((part) => {
             const [key, value] = part.split('=');
@@ -35,9 +28,9 @@ function getConfig() {
     return config;
 }
 
-const { cookie: myCookie, username: myUsername, domain: flbUrl } = getConfig();
+const { cookie: myCookie, username: myUsername, domain: flbDomain } = getConfig();
 
-// 检查配置完整性和环境支持
+// 检查环境支持
 if (!$task) {
     $notify(cookieName, "错误", "当前环境不支持，请在Quantumult X中运行");
     $done();
@@ -53,13 +46,13 @@ if (!myCookie || !myUsername) {
 ;(async () => {
     try {
         console.log('开始福利吧签到流程...');
-        console.log(`使用域名: ${flbUrl}`);
+        console.log(`使用域名: ${flbDomain}`);
         console.log(`用户名: ${myUsername}`);
         
         // 1. 访问PC主页验证Cookie并获取用户名
         console.log('正在验证Cookie和访问网站...');
         const userOptions = {
-            url: `https://${flbUrl}/forum.php?mobile=no`,
+            url: `https://${flbDomain}/forum.php?mobile=no`,
             headers: {
                 'Cookie': myCookie,
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -103,8 +96,8 @@ if (!myCookie || !myUsername) {
 
         // 2. 获取签到链接
         console.log('正在获取签到链接...');
-        const signUrlMatch = userInfo.match(/}function fx_checkin(.*?);/);
         let signUrl = '';
+        const signUrlMatch = userInfo.match(/}function fx_checkin(.*?);/);
         
         if (!signUrlMatch) {
             // 尝试其他可能的匹配模式
@@ -116,26 +109,33 @@ if (!myCookie || !myUsername) {
                 // 检查是否已经签到
                 if (userInfo.includes('今日已签到') || userInfo.includes('已签到')) {
                     console.log('今日已签到过，直接获取积分信息');
-                    // 继续执行获取积分信息
                 } else {
                     throw new Error('无法提取签到链接，请检查网页结构是否变化');
                 }
             }
         } else {
-            signUrl = signUrlMatch[1];
-            signUrl = signUrl.substring(47, signUrl.length - 2);
+            let rawSignUrl = signUrlMatch[1];
+            // 修正：用正则提取真实URL，避免硬编码偏移
+            const urlMatch = rawSignUrl.match(/https?:\/\/[^'"]+/);
+            if (urlMatch) {
+                signUrl = urlMatch[0];
+            } else if (rawSignUrl.includes('plugin.php')) {
+                signUrl = `https://${flbDomain}/${rawSignUrl}`;
+            } else {
+                signUrl = rawSignUrl;
+            }
             console.log(`签到链接: ${signUrl}`);
         }
 
-        // 3. 执行签到（如果有签到链接）
+        // 3. 执行签到（如果有签到链接且尚未签到）
         if (signUrl && !userInfo.includes('今日已签到')) {
             console.log('正在执行签到...');
             const signOptions = {
-                url: `https://${flbUrl}/${signUrl}`,
+                url: signUrl.startsWith('http') ? signUrl : `https://${flbDomain}/${signUrl}`,
                 headers: {
                     'Cookie': myCookie,
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-                    'Referer': `https://${flbUrl}/forum.php`
+                    'Referer': `https://${flbDomain}/forum.php`
                 },
                 timeout: 15000
             };
@@ -143,7 +143,7 @@ if (!myCookie || !myUsername) {
             const signResult = await request(signOptions);
             
             // 检查签到结果
-            if (signResult.includes('今日已签到') || signResult.includes('已经签到') || signResult.includes('签到成功')) {
+            if (signResult && (signResult.includes('今日已签到') || signResult.includes('已经签到') || signResult.includes('签到成功'))) {
                 console.log('📝 签到完成');
             } else {
                 console.log('✅ 签到请求已发送');
@@ -153,6 +153,10 @@ if (!myCookie || !myUsername) {
         // 4. 获取签到后的积分信息
         console.log('正在获取积分信息...');
         const finalUserInfo = await request(userOptions);
+        
+        if (!finalUserInfo) {
+            throw new Error('获取积分信息时网络请求失败');
+        }
         
         // 尝试多种匹配模式获取积分信息
         let currentMoney = '未知';
@@ -225,13 +229,13 @@ function request(options, throwError = true) {
             } else if (throwError) {
                 reject(`HTTP错误: ${response.statusCode} - ${response.statusText}`);
             } else {
-                resolve(response.body);
+                resolve(response.body); // 非200也返回body，由调用方决定是否处理
             }
         }, reason => {
             if (throwError) {
                 reject(reason.error || reason);
             } else {
-                resolve(null);
+                resolve(null); // 不抛出错误时返回null
             }
         });
     });
