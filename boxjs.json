@@ -1,7 +1,7 @@
 {
   "id": "ader90520.app.sub",
   "name": "ader90520 脚本订阅合集",
-  "description": "自用脚本合集，包含福利吧签到和Bing积分任务，兼容BoxJs以及Quantumult X",
+  "description": "自用脚本合集，包含福利吧签到任务，兼容BoxJs以及Quantumult X",
   "author": "@ader90520",
   "icon": "https://raw.githubusercontent.com/leiyiyan/resource/main/icons/pyy.png",
   "repo": "https://github.com/ader90520/QuantumultX",
@@ -126,65 +126,6 @@
         "</ul>",
         "</div>"
       ]
-    },
-    {
-      "id": "bing_complete",
-      "name": "Bing积分安全版",
-      "author": "@ader90520",
-      "repo": "https://github.com/ader90520/QuantumultX",
-      "icons": [
-        "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bing.png",
-        "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bing.png"
-      ],
-      "keys": [
-        "bingPointCookieKey",
-        "bingSearchCookiePCKey",
-        "bingSearchCookieMobileKey",
-        "bing_cn",
-        "bing_pc_times",
-        "bing_mobile_times",
-        "bing_pc_goal",
-        "bing_mobile_goal",
-        "bing_pc_progress",
-        "bing_mobile_progress",
-        "bing_interval",
-        "bing_reset_hours",
-        "bing_cache_point",
-        "bing_auto_skip",
-        "bing_last_success_date",
-        "bing_last_reset_date",
-        "bing_safe_mode",
-        "bing_max_daily",
-        "bing_daily_count",
-        "bing_account_status",
-        "bing_last_check_date",
-        "bing_point_check_interval",
-        "bing_run_count",
-        "bing_min_interval",
-        "bing_max_interval",
-        "bing_last_points",
-        "bing_consecutive_failures"
-      ],
-      "settings": [
-        {
-          "id": "bing_cn",
-          "name": "使用国区域名",
-          "val": false,
-          "type": "boolean",
-          "desc": "开启使用cn.bing.com，关闭使用www.bing.com。国际版更稳定，建议关闭"
-        },
-        {
-          "id": "bing_pc_times",
-          "name": "每次PC搜索次数",
-          "val": 1,
-          "type": "number",
-          "placeholder": "1",
-          "desc": "每次执行时PC端搜索次数，限制1-2次，积分不增加时建议1次"
-        },
-        {
-          "id": "bing_mobile_times",
-          "name": "每次移动搜索次数",
-          "val": 1,
-          "type": "number",
-          "placeholder": "1",
-          "desc": "每次执行时移动端
+    }
+  ]
+}
