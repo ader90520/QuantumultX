@@ -1,8 +1,8 @@
 {
-  "id": "ader90520.app.sub",
-  "name": "福利吧签到（自用修正版）",
-  "description": "福利吧自动签到，兼容BoxJs",
-  "author": "@ader90520",
+  "id": "ader90520.merged.sub",
+  "name": "脚本合集（福利吧签到 + TestFlight监控）",
+  "description": "包含福利吧自动签到和TestFlight自动加入两个脚本，兼容BoxJs",
+  "author": "@ader90520, @Yuheng0101",
   "icon": "https://raw.githubusercontent.com/leiyiyan/resource/main/icons/pyy.png",
   "repo": "https://github.com/ader90520/QuantumultX",
   "apps": [
@@ -10,7 +10,7 @@
       "id": "fuba_sign",
       "name": "福利吧签到",
       "author": "@ader90520",
-      "repo": "https://github.com/ader90520/QuantumultX",
+      "repo": "https://github.com/ader90520/QuantumultX/tree/main/Stripts/myScripts/fuba",
       "icons": [
         "https://raw.githubusercontent.com/leiyiyan/resource/main/icons/pyy.png",
         "https://raw.githubusercontent.com/leiyiyan/resource/main/icons/pyy.png"
@@ -35,7 +35,7 @@
             { "name": "wnflb99.com", "val": "www.wnflb99.com" },
             { "name": "wnflb77.com", "val": "www.wnflb77.com" }
           ],
-          "desc": "选择福利吧访问域名"
+          "desc": "选择福利吧访问域名，如果某个域名无法访问，请尝试其他域名"
         },
         {
           "id": "fuba_cookie",
@@ -44,15 +44,15 @@
           "type": "textarea",
           "autoGrow": true,
           "placeholder": "通过圈X重写规则自动获取",
-          "desc": "已配置自动获取"
+          "desc": "已配置自动获取，无需手动填写"
         },
         {
           "id": "fuba_username",
           "name": "福利吧用户名",
           "val": "",
           "type": "text",
-          "placeholder": "自动获取",
-          "desc": "自动获取"
+          "placeholder": "通过圈X重写规则自动获取",
+          "desc": "已配置自动获取，无需手动填写"
         },
         {
           "id": "fuba_last_sign_date",
@@ -60,45 +60,125 @@
           "val": "",
           "type": "text",
           "placeholder": "自动记录",
-          "desc": "自动记录"
+          "desc": "自动记录最后成功签到的日期"
         },
         {
           "id": "fuba_continuous_days",
           "name": "连续签到天数",
           "val": "0",
           "type": "number",
-          "desc": "自动记录"
+          "placeholder": "0",
+          "desc": "自动记录连续签到天数"
         },
         {
           "id": "fuba_total_days",
           "name": "总签到天数",
           "val": "0",
           "type": "number",
-          "desc": "自动记录"
+          "placeholder": "0",
+          "desc": "自动记录总签到天数"
         },
         {
           "id": "@fuba.auto_get",
           "name": "自动获取状态",
           "val": false,
           "type": "boolean",
-          "desc": "显示是否已自动获取"
+          "desc": "显示Cookie和用户名是否已通过重写规则自动获取"
         },
         {
           "id": "@fuba.debug_mode",
           "name": "调试模式",
           "val": false,
           "type": "boolean",
-          "desc": "开启详细日志"
+          "desc": "开启后显示详细日志，用于排查问题"
         }
       ],
       "scripts": [
         {
+          "name": "福利吧签到",
           "script": "https://raw.githubusercontent.com/ader90520/QuantumultX/refs/heads/main/Stripts/myScripts/fuba/fuba.js"
         }
       ],
       "desc_html": [
         "<h3>福利吧自动签到脚本</h3>",
-        "<p>Cookie和用户名已配置自动获取，无需手动填写</p>"
+        "<p>原版脚本，支持自动获取 Cookie 和用户名，请在 BoxJs 中填写域名、Cookie（可自动获取）、用户名（可自动获取）。</p>"
+      ]
+    },
+    {
+      "id": "autojoin_tf",
+      "name": "TestFlight 自动加入",
+      "author": "@Yuheng0101, @MuTu888",
+      "repo": "https://github.com/Yuheng0101/X/tree/main/Tasks",
+      "icons": [
+        "https://raw.githubusercontent.com/githubdulong/Script/master/Images/testflight.png",
+        "https://raw.githubusercontent.com/githubdulong/Script/master/Images/testflight.png"
+      ],
+      "keys": [
+        "tf_key",
+        "tf_session_id",
+        "tf_session_digest",
+        "tf_request_id",
+        "tf_apple_store_front",
+        "tf_apple_ta_device",
+        "tf_apple_amd_m",
+        "tf_apple_device_model",
+        "tf_user_agent",
+        "tf_app_ids"
+      ],
+      "settings": [
+        {
+          "id": "tf_loon_count",
+          "name": "每次执行循环次数 (LOON_COUNT)",
+          "val": 1,
+          "type": "number",
+          "desc": "每次定时任务执行时，对每个应用重复尝试加入的次数，默认 1"
+        },
+        {
+          "id": "tf_interval",
+          "name": "等待间隔 (秒) (INTERVAL)",
+          "val": 0,
+          "type": "number",
+          "desc": "每次尝试加入之间的等待时间（秒），0 表示不等待"
+        }
+      ],
+      "scripts": [
+        {
+          "name": "TF 监控自动加入",
+          "script": "https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/AutoJoinTF.js"
+        }
+      ],
+      "desc_html": [
+        "<h3>📱 TestFlight 自动加入脚本</h3>",
+        "<p>自动监控已捕获的 TestFlight 链接，当应用开放测试时自动加入。</p>",
+        "<h4>📌 使用说明</h4>",
+        "<ol>",
+        "<li>确保您的代理工具已配置 MITM 和脚本（见下方配置示例）。</li>",
+        "<li><strong>首次使用：</strong>打开任意一个 TestFlight 链接（例如 <code>https://testflight.apple.com/join/xxxxx</code>），脚本会自动捕获应用 ID 并存储。</li>",
+        "<li>打开 TestFlight App 首页（应用列表），脚本会自动捕获所需的会话参数（SessionId、Key 等）。</li>",
+        "<li>捕获成功后，定时任务将自动运行，每 5 秒检查一次并尝试加入未加入的测试。</li>",
+        "</ol>",
+        "<h4>⚙️ 配置示例</h4>",
+        "<p><strong>Quantumult X:</strong></p>",
+        "<pre><code>[mitm]\nhostname = testflight.apple.com\n\n[rewrite_local]\n^https:\\/\\/testflight\\.apple\\.com\\/(v3\\/accounts\\/.*[^\\/accept]|join\\/[A-Za-z0-9]+)$ url script-request-header https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/AutoJoinTF.js\n\n[task_local]\n0/5 * * * * * https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/AutoJoinTF.js, tag=TF监控自动加入, img-url=https://raw.githubusercontent.com/githubdulong/Script/master/Images/testflight.png, enabled=true</code></pre>",
+        "<p><strong>Loon:</strong></p>",
+        "<pre><code>[MITM]\nhostname = testflight.apple.com\n\n[Script]\nhttp-request ^https:\\/\\/testflight\\.apple\\.com\\/(v3\\/accounts\\/.*[^\\/accept]|join\\/[A-Za-z0-9]+)$ tag=TF获取参数, script-path=https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/AutoJoinTF.js\ncron \"0/5 * * * * *\" script-path=https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/AutoJoinTF.js, timeout=10, tag=TF监控自动加入, img-url=https://raw.githubusercontent.com/githubdulong/Script/master/Images/testflight.png</code></pre>",
+        "<p><strong>Surge:</strong></p>",
+        "<pre><code>[MITM]\nhostname = %APPEND% testflight.apple.com\n\n[Script]\nTF获取参数 = type=http-request,pattern=^https:\\/\\/testflight\\.apple\\.com\\/(v3\\/accounts\\/.*[^\\/accept]|join\\/[A-Za-z0-9]+)$,requires-body=0,max-size=0,timeout=1000,script-path=https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/AutoJoinTF.js,script-update-interval=0\nTF监控自动加入 = type=cron,cronexp=\"0/5 * * * * *\",wake-system=1,script-path=https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/AutoJoinTF.js,timeout=60</code></pre>",
+        "<h4>📁 存储的数据说明</h4>",
+        "<ul>",
+        "<li><code>tf_key</code>、<code>tf_session_id</code> 等：自动捕获的 TestFlight 会话参数，无需手动填写。</li>",
+        "<li><code>tf_app_ids</code>：已捕获的应用 ID 列表，格式为 <code>appId#0/1</code>（0 表示未加入，1 表示已加入）。</li>",
+        "<li><code>tf_loon_count</code>、<code>tf_interval</code>：可在下方设置中调整执行行为。</li>",
+        "</ul>",
+        "<div style='padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; margin-top: 15px;'>",
+        "<p><strong>⚠️ 重要提示</strong></p>",
+        "<ul>",
+        "<li>会话参数通常有效期为较长时间，如果失效请重新打开 TestFlight App 首页刷新。</li>",
+        "<li>捕获应用 ID 后，请不要删除 <code>tf_app_ids</code> 中的记录，否则脚本会重复加入已加入的应用。</li>",
+        "<li>如果应用已满员或测试结束，脚本会自动将其标记为已加入（状态变为 1），避免重复请求。</li>",
+        "<li>建议保持定时任务的执行频率为每 5 秒一次，过高的频率可能触发苹果风控。</li>",
+        "</ul>",
+        "</div>"
       ]
     }
   ]
